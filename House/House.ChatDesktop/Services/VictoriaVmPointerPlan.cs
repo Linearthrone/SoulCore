@@ -1,3 +1,5 @@
+using Microsoft.CSharp.RuntimeBinder;
+
 namespace House.ChatDesktop.Services;
 
 /// <summary>
@@ -301,6 +303,27 @@ public static class VictoriaVmPointerPlan
     /// <summary>Operator-visible status when the input overlay is missing over the VM HWND.</summary>
     public static string FormatOperatorOverlayMissingFault() =>
         "Her screen: input overlay missing — clicks hit VirtualBox paint only (guest deaf).";
+
+    /// <summary>
+    /// True when dynamic binding turned a nullable point into <c>ValueTuple</c>
+    /// and <c>.Value</c> failed. That is not a VirtualBox COM failure.
+    /// </summary>
+    public static bool IsNullablePointBinderFailure(Exception ex) =>
+        ex is RuntimeBinderException
+        && ex.Message.Contains("does not contain a definition for 'Value'", StringComparison.Ordinal);
+
+    /// <summary>
+    /// Map result was not a nullable point, so inject did not run.
+    /// This line does not say COM error.
+    /// </summary>
+    public static string FormatMappingResultNotNullablePoint(int buttons) =>
+        $"her-screen click buttons={buttons} cursor=held mapping result was not a nullable point";
+
+    /// <summary>
+    /// Wheel map result was not a nullable point, so inject did not run.
+    /// </summary>
+    public static string FormatWheelMappingResultNotNullablePoint(int notches) =>
+        $"her-screen wheel notches={notches} mapping result was not a nullable point";
 
     /// <summary>
     /// Click never reached Absolute (console missing before guest map / inject).

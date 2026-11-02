@@ -1,5 +1,7 @@
 using System.Linq;
+using System.Runtime.Versioning;
 using House.ChatDesktop.Services;
+using Microsoft.CSharp.RuntimeBinder;
 
 namespace House.ChatDesktop.Tests;
 
@@ -449,5 +451,72 @@ public class VictoriaVmPointerPlanTests
         });
         Assert.Equal(0, steps[0].Dz);
         Assert.Equal(-2, steps[1].Dz);
+    }
+
+    [Fact]
+    public void MapSurfaceToGuest_ReturnsNullablePoint_ValueIsReadable()
+    {
+        (int X, int Y)? mapped = VictoriaVmPointer.MapSurfaceToGuest(
+            displayWidth: null,
+            displayHeight: null,
+            hubWidth: 1280,
+            hubHeight: 800,
+            surfaceX: 450,
+            surfaceY: 300,
+            surfaceW: 900,
+            surfaceH: 600);
+
+        Assert.NotNull(mapped);
+        Assert.Equal(640, mapped.Value.X);
+        Assert.Equal(400, mapped.Value.Y);
+        Assert.IsType<(int X, int Y)>(mapped.Value);
+    }
+
+    /// <summary>
+    /// A dynamic VirtualBox session must not make the mapped point dynamic.
+    /// ValueTuple has no .Value; that throw happened before PutMouseEventAbsolute.
+    /// </summary>
+    [Fact]
+    [SupportedOSPlatform("windows")]
+    public void MapSurfaceFromSession_DynamicSession_ValueDoesNotThrow()
+    {
+        dynamic session = new object();
+        object sessionObject = session;
+        VictoriaVmPointer.TryGetCachedGuestFrame(out var hubW, out var hubH);
+
+        (int X, int Y)? mapped = VictoriaVmPointer.MapSurfaceFromSession(
+            sessionObject, 450, 300, 900, 600);
+        (int X, int Y)? expected = VictoriaVmPointer.MapSurfaceToGuest(
+            null, null, hubW, hubH, 450, 300, 900, 600);
+
+        Assert.Equal(expected, mapped);
+        Assert.NotNull(mapped);
+        var point = mapped.Value;
+        Assert.Equal(expected!.Value.X, point.X);
+        Assert.Equal(expected.Value.Y, point.Y);
+    }
+
+    [Fact]
+    public void MappingBinderFailure_IsNotLabeledAsComError()
+    {
+        var binder = new RuntimeBinderException(
+            "'System.ValueTuple<int,int>' does not contain a definition for 'Value'");
+        Assert.True(VictoriaVmPointerPlan.IsNullablePointBinderFailure(binder));
+        Assert.False(VictoriaVmPointerPlan.IsNullablePointBinderFailure(
+            new RuntimeBinderException(
+                "'IMouse' does not contain a definition for 'PutMouseEventAbsolute'")));
+        Assert.False(VictoriaVmPointerPlan.IsNullablePointBinderFailure(
+            new InvalidOperationException("VirtualBox console has no mouse.")));
+
+        var click = VictoriaVmPointerPlan.FormatMappingResultNotNullablePoint(0);
+        var wheel = VictoriaVmPointerPlan.FormatWheelMappingResultNotNullablePoint(1);
+        Assert.Equal(
+            "her-screen click buttons=0 cursor=held mapping result was not a nullable point",
+            click);
+        Assert.Equal(
+            "her-screen wheel notches=1 mapping result was not a nullable point",
+            wheel);
+        Assert.DoesNotContain("COM error", click, StringComparison.Ordinal);
+        Assert.DoesNotContain("COM error", wheel, StringComparison.Ordinal);
     }
 }

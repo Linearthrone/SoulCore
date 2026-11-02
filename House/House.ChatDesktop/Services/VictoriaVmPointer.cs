@@ -326,7 +326,12 @@ public static class VictoriaVmPointer
                 throw new InvalidOperationException("VirtualBox console has no mouse.");
             }
 
-            var mapped = MapSurfaceToGuest(session, surface.X, surface.Y, surface.Width, surface.Height);
+            // Box the COM session so MapSurfaceFromSession is a static call.
+            // A dynamic argument makes the nullable point come back as ValueTuple,
+            // and .Value throws before PutMouseEventAbsolute.
+            object? sessionObject = session;
+            (int X, int Y)? mapped = MapSurfaceFromSession(
+                sessionObject, surface.X, surface.Y, surface.Width, surface.Height);
             if (mapped is null)
             {
                 PresenceStartupLog.Write(
@@ -346,10 +351,15 @@ public static class VictoriaVmPointer
             if (!deliveryLogged)
             {
                 PresenceStartupLog.Write(
-                    VictoriaVmPointerPlan.FormatClickFailedBeforeInjectLine(surface.Buttons, FaultText(ex)));
+                    VictoriaVmPointerPlan.IsNullablePointBinderFailure(ex)
+                        ? VictoriaVmPointerPlan.FormatMappingResultNotNullablePoint(surface.Buttons)
+                        : VictoriaVmPointerPlan.FormatClickFailedBeforeInjectLine(surface.Buttons, FaultText(ex)));
             }
 
-            ReportFault(VictoriaVmPointerPlan.FormatOperatorClickFault(FaultText(ex)));
+            ReportFault(VictoriaVmPointerPlan.FormatOperatorClickFault(
+                VictoriaVmPointerPlan.IsNullablePointBinderFailure(ex)
+                    ? "mapping result was not a nullable point"
+                    : FaultText(ex)));
         }
         finally
         {
@@ -371,7 +381,9 @@ public static class VictoriaVmPointer
             if (mouse is null || session is null)
                 throw new InvalidOperationException("VirtualBox console has no mouse.");
 
-            var mapped = MapSurfaceToGuest(session, surface.X, surface.Y, surface.Width, surface.Height);
+            object? sessionObject = session;
+            (int X, int Y)? mapped = MapSurfaceFromSession(
+                sessionObject, surface.X, surface.Y, surface.Width, surface.Height);
             if (mapped is null)
             {
                 PresenceStartupLog.Write(
@@ -399,10 +411,19 @@ public static class VictoriaVmPointer
         }
         catch (Exception ex)
         {
-            ReportFault($"VM wheel failed: {FaultText(ex)}");
-            PresenceStartupLog.Write(
-                VictoriaVmPointerPlan.FormatWheelDeliveryLine(
-                    surface.Notches, surface.X, surface.Y, sent: false, comError: ex.Message));
+            if (VictoriaVmPointerPlan.IsNullablePointBinderFailure(ex))
+            {
+                ReportFault("VM wheel failed: mapping result was not a nullable point");
+                PresenceStartupLog.Write(
+                    VictoriaVmPointerPlan.FormatWheelMappingResultNotNullablePoint(surface.Notches));
+            }
+            else
+            {
+                ReportFault($"VM wheel failed: {FaultText(ex)}");
+                PresenceStartupLog.Write(
+                    VictoriaVmPointerPlan.FormatWheelDeliveryLine(
+                        surface.Notches, surface.X, surface.Y, sent: false, comError: ex.Message));
+            }
         }
         finally
         {
@@ -410,9 +431,45 @@ public static class VictoriaVmPointer
         }
     }
 
+    /// <summary>
+    /// Dynamic stays inside this method. Callers pass <see cref="object"/> and
+    /// receive <c>int?</c> width and height, so the mapper call is not dynamically bound.
+    /// </summary>
     [SupportedOSPlatform("windows")]
-    private static (int X, int Y)? MapSurfaceToGuest(
-        dynamic session, int surfaceX, int surfaceY, int surfaceW, int surfaceH)
+    private static (int? Width, int? Height) ReadSessionDisplaySize(object? session)
+    {
+        if (session is null)
+            return (null, null);
+
+        try
+        {
+            dynamic dyn = session;
+            dynamic console = dyn.Console;
+            (int Width, int Height)? size = TryReadDisplaySize(console);
+            if (size is not { } display)
+                return (null, null);
+
+            NoteGuestFrame(display.Width, display.Height);
+            return (display.Width, display.Height);
+        }
+        catch
+        {
+            // Hub / default seed below.
+            return (null, null);
+        }
+    }
+
+    /// <summary>
+    /// Maps a Her-screen point. <paramref name="session"/> is <see cref="object"/>
+    /// so this return stays <c>(int, int)?</c>. Do not pass <c>dynamic</c> here.
+    /// </summary>
+    [SupportedOSPlatform("windows")]
+    internal static (int X, int Y)? MapSurfaceFromSession(
+        object? session,
+        int surfaceX,
+        int surfaceY,
+        int surfaceW,
+        int surfaceH)
     {
         int hubW;
         int hubH;
@@ -422,27 +479,35 @@ public static class VictoriaVmPointer
             hubH = _guestHeight;
         }
 
-        int? displayW = null;
-        int? displayH = null;
-        try
-        {
-            dynamic console = session.Console;
-            var display = TryReadDisplaySize(console);
-            if (display is not null)
-            {
-                displayW = display.Value.Width;
-                displayH = display.Value.Height;
-                NoteGuestFrame(display.Value.Width, display.Value.Height);
-            }
-        }
-        catch
-        {
-            // Hub / default seed below.
-        }
+        var display = ReadSessionDisplaySize(session);
+        return MapSurfaceToGuest(
+            display.Width,
+            display.Height,
+            hubW,
+            hubH,
+            surfaceX,
+            surfaceY,
+            surfaceW,
+            surfaceH);
+    }
 
+    /// <summary>
+    /// Slot → guest framebuffer. Display size is already a static <c>int?</c>.
+    /// Hub is the snapshot taken before this call's display read.
+    /// </summary>
+    internal static (int X, int Y)? MapSurfaceToGuest(
+        int? displayWidth,
+        int? displayHeight,
+        int hubWidth,
+        int hubHeight,
+        int surfaceX,
+        int surfaceY,
+        int surfaceW,
+        int surfaceH)
+    {
         // PROP-19.3: same ResolveGuestFramebuffer + stretch-fill + Absolute as soft-cursor tip.
         var fb = VictoriaBrowserCoordMap.ResolveGuestFramebuffer(
-            hubW, hubH, displayW, displayH, surfaceW, surfaceH);
+            hubWidth, hubHeight, displayWidth, displayHeight, surfaceW, surfaceH);
         var inject = VictoriaBrowserCoordMap.MapSlotToInject(
             surfaceX, surfaceY, surfaceW, surfaceH, fb.Width, fb.Height);
         if (inject is not null)
@@ -451,7 +516,7 @@ public static class VictoriaVmPointer
                 $"her-screen click map surface={surfaceW}x{surfaceH} pt={surfaceX},{surfaceY} " +
                 $"guest={fb.Width}x{fb.Height} guest0={inject.Value.GuestX},{inject.Value.GuestY} " +
                 $"abs={inject.Value.AbsX},{inject.Value.AbsY}" +
-                (displayW is > 0 ? " display=ok" : " display=fallback"));
+                (displayWidth is > 0 ? " display=ok" : " display=fallback"));
             return (inject.Value.GuestX, inject.Value.GuestY);
         }
 
