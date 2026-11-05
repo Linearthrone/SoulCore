@@ -36,6 +36,7 @@ public static class LeisureTools
     private static readonly HashSet<string> Deny = new(StringComparer.OrdinalIgnoreCase)
     {
         "guest_shell",
+        "vscode_open",
         "email_send",
         "email_delete",
         "email_draft",

@@ -351,6 +351,7 @@ public partial class MainWindow
         }
 
         _victoriaBrowserEmbedHost = null;
+        VictoriaVmPointer.NoteHostWindow(0);
         if (VictoriaBrowserEmbedSlot is not null)
             VictoriaBrowserEmbedSlot.IsVisible = false;
     }
@@ -803,13 +804,15 @@ public partial class MainWindow
         var fill = flash ? SoftCursorClickFill : SoftCursorIdleFill;
         var size = flash ? 36.0 : 28.0;
 
-        // PROP-19.3: HWND embed tip = inject Guest0 via stretch-fill inverse.
-        // JPEG / Playwright still uses Uniform letterbox (glyph-centered).
+        // HWND embed tip = the same 1:1 picture the click uses. JPEG stays letterbox below.
         if (IsVictoriaVmEmbedLive())
         {
-            var tip = VictoriaBrowserCoordMap.TryMapGuestTipToSurfaceStretchFill(
-                cx, cy, bounds.Width, bounds.Height,
+            var view = VictoriaVmPointer.TryMeasureEmbedViewport(
                 _browserImagePixelWidth, _browserImagePixelHeight);
+            var tip = view is null
+                ? null
+                : VictoriaBrowserCoordMap.TryMapGuestTipToViewport(
+                    cx, cy, view.Value, _browserImagePixelWidth, _browserImagePixelHeight);
             if (tip is null)
             {
                 layer.IsVisible = false;
@@ -817,12 +820,12 @@ public partial class MainWindow
                 return;
             }
 
-            // Live VM HWND covers in-tree Avalonia — paint on Win32 sibling (or Avalonia fallback).
+            // Tip is already embed-client pixels. Do not scale it again.
             layer.IsVisible = false;
             EnsureHerScreenOverlay();
             var scaling = TopLevel.GetTopLevel(surface)?.RenderScaling ?? 1.0;
-            var tipX = (int)Math.Round(tip.Value.TipX * scaling);
-            var tipY = (int)Math.Round(tip.Value.TipY * scaling);
+            var tipX = (int)Math.Round(tip.Value.TipX);
+            var tipY = (int)Math.Round(tip.Value.TipY);
             var sizePx = (int)Math.Round(size * scaling);
             if (_herScreenHwndOverlay is { IsAttached: true })
             {
@@ -877,8 +880,10 @@ public partial class MainWindow
         }
 
         SyncGuestFramebufferFromHubAndCom();
-        var local = HerScreenCursorProbe.TryGetPointerInSurface(VictoriaBrowserSurface);
-        if (local is null)
+        var local = HerScreenCursorProbe.TryGetPointerInSurfacePixels(VictoriaBrowserSurface);
+        var view = VictoriaVmPointer.TryMeasureEmbedViewport(
+            _browserImagePixelWidth, _browserImagePixelHeight);
+        if (local is null || view is null)
         {
             _hoverGuestX = null;
             _hoverGuestY = null;
@@ -886,11 +891,10 @@ public partial class MainWindow
             return;
         }
 
-        var mapped = VictoriaBrowserCoordMap.TryMapPointerStretchFill(
+        var mapped = VictoriaBrowserCoordMap.MapViewportToInject(
             local.Value.X,
             local.Value.Y,
-            VictoriaBrowserSurface.Bounds.Width,
-            VictoriaBrowserSurface.Bounds.Height,
+            view.Value,
             _browserImagePixelWidth,
             _browserImagePixelHeight);
 
@@ -902,9 +906,10 @@ public partial class MainWindow
             return;
         }
 
-        _hoverGuestX = mapped.Value.X;
-        _hoverGuestY = mapped.Value.Y;
-        _lastHoverClickHint = VictoriaBrowserCoordMap.FormatClickHint(mapped.Value.X, mapped.Value.Y);
+        _hoverGuestX = mapped.Value.GuestX;
+        _hoverGuestY = mapped.Value.GuestY;
+        _lastHoverClickHint = VictoriaBrowserCoordMap.FormatClickHint(
+            mapped.Value.GuestX, mapped.Value.GuestY);
         RefreshVictoriaBrowserCoordBadge();
     }
 

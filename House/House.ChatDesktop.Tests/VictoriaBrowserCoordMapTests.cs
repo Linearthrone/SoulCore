@@ -191,7 +191,7 @@ public class VictoriaBrowserCoordMapTests
         Assert.Equal(641, inject.Value.AbsX);
         Assert.Equal(401, inject.Value.AbsY);
 
-        var tip = VictoriaBrowserCoordMap.TryMapGuestTipToSurfaceStretchFill(
+        var tip = VictoriaBrowserCoordMap.TryMapGuestTipToSurfaceUniform(
             inject.Value.GuestX, inject.Value.GuestY,
             900, 600, 1280, 800);
         Assert.NotNull(tip);
@@ -199,33 +199,119 @@ public class VictoriaBrowserCoordMapTests
         Assert.InRange(tip.Value.TipY, 299.5, 300.5);
     }
 
-    [Theory]
-    [InlineData(0, 0, 0, 0, 1, 1)]
-    [InlineData(899, 599, 1279, 799, 1280, 800)] // near bottom-right → last guest px
-    [InlineData(0, 599, 0, 799, 1, 800)]
-    [InlineData(899, 0, 1279, 0, 1280, 1)]
-    public void MapSlotToInject_Edges_MatchTipInverse(
-        double slotX, double slotY,
-        int expectGuestX, int expectGuestY,
-        int expectAbsX, int expectAbsY)
+    [Fact]
+    public void MapSlotToInject_ContentCorners_MatchUniformTipInverse()
     {
-        var inject = VictoriaBrowserCoordMap.MapSlotToInject(
-            slotX, slotY, 900, 600, 1280, 800);
-        Assert.NotNull(inject);
-        Assert.Equal(expectGuestX, inject!.Value.GuestX);
-        Assert.Equal(expectGuestY, inject.Value.GuestY);
-        Assert.Equal(expectAbsX, inject.Value.AbsX);
-        Assert.Equal(expectAbsY, inject.Value.AbsY);
+        // 900×600 slot, 1280×800 guest: aspect-fit leaves a vertical bar.
+        // scale = 900/1280, offsetY = (600 - 562.5) / 2 = 18.75.
+        const double offsetY = 18.75;
+        var corners = new[]
+        {
+            (x: 0.0, y: offsetY, gx: 0, gy: 0),
+            (x: 899.0, y: offsetY, gx: 1278, gy: 0),
+            (x: 0.0, y: offsetY + 562.5 - 0.01, gx: 0, gy: 799),
+        };
+        foreach (var (x, y, gx, gy) in corners)
+        {
+            var inject = VictoriaBrowserCoordMap.MapSlotToInject(x, y, 900, 600, 1280, 800);
+            Assert.NotNull(inject);
+            Assert.Equal(gx, inject!.Value.GuestX);
+            Assert.Equal(gy, inject.Value.GuestY);
 
-        var tip = VictoriaBrowserCoordMap.TryMapGuestTipToSurfaceStretchFill(
-            inject.Value.GuestX, inject.Value.GuestY, 900, 600, 1280, 800);
-        Assert.NotNull(tip);
-        // Tip is the inject Guest0 surface point — remapping tip → guest recovers Guest0.
-        var back = VictoriaBrowserCoordMap.TryMapPointerStretchFill(
-            tip!.Value.TipX, tip.Value.TipY, 900, 600, 1280, 800);
-        Assert.NotNull(back);
-        Assert.Equal(inject.Value.GuestX, back!.Value.X);
-        Assert.Equal(inject.Value.GuestY, back.Value.Y);
+            var tip = VictoriaBrowserCoordMap.TryMapGuestTipToSurfaceUniform(
+                inject.Value.GuestX, inject.Value.GuestY, 900, 600, 1280, 800);
+            Assert.NotNull(tip);
+            var back = VictoriaBrowserCoordMap.TryMapPointerToPage(
+                tip!.Value.TipX, tip.Value.TipY, 900, 600, 1280, 800);
+            Assert.NotNull(back);
+            Assert.Equal(inject.Value.GuestX, back!.Value.X);
+            Assert.Equal(inject.Value.GuestY, back.Value.Y);
+        }
+    }
+
+    /// <summary>
+    /// Measured 2026-11-04 on the live embed. Guest screenshot matched this child at
+    /// 1:1 (mean channel error 0.66). Stretch of the 1131×903 slot and letterbox of
+    /// the slot both miss. Menu and the empty band are not guest pixels.
+    /// </summary>
+    [Fact]
+    public void LiveEmbed_OneToOnePicture_NotStretchOrLetterbox()
+    {
+        var children = new VictoriaBrowserCoordMap.ViewportChild[]
+        {
+            new(0, 830, 1113, 26, false),
+            new(0, 0, 1113, 41, false),
+            new(0, 41, 1113, 789, false),
+            new(0, 69, 1113, 735, false),
+            new(0, 789, 1113, 15, false),
+            new(1098, 69, 15, 720, false),
+            new(0, 69, 1113, 720, false),
+            new(0, 0, 1131, 903, true),
+        };
+        var view = VictoriaBrowserCoordMap.ChooseGuestViewport(children, 1280, 720);
+        Assert.Equal(new VictoriaBrowserCoordMap.EmbedViewport(0, 69, 1113, 720), view);
+
+        var click = VictoriaBrowserCoordMap.MapViewportToInject(484, 141, view!.Value, 1280, 720);
+        Assert.Equal((484, 72, 485, 73), (click!.Value.GuestX, click.Value.GuestY, click.Value.AbsX, click.Value.AbsY));
+
+        var stretch = VictoriaBrowserCoordMap.TryMapPointerStretchFill(484, 141, 1131, 903, 1280, 720);
+        Assert.NotEqual(click.Value.GuestX, stretch!.Value.X);
+        Assert.NotEqual(click.Value.GuestY, stretch.Value.Y);
+
+        var letterbox = VictoriaBrowserCoordMap.TryMapPointerToPage(484, 141, 1131, 903, 1280, 720);
+        Assert.NotEqual(click.Value.GuestX, letterbox!.Value.X);
+        Assert.NotEqual(click.Value.GuestY, letterbox.Value.Y);
+
+        Assert.Null(VictoriaBrowserCoordMap.MapViewportToInject(40, 20, view.Value, 1280, 720));
+        Assert.Null(VictoriaBrowserCoordMap.MapViewportToInject(100, 68, view.Value, 1280, 720));
+        Assert.Null(VictoriaBrowserCoordMap.MapViewportToInject(100, 789, view.Value, 1280, 720));
+        Assert.Null(VictoriaBrowserCoordMap.MapViewportToInject(100, 880, view.Value, 1280, 720));
+        Assert.Null(VictoriaBrowserCoordMap.MapViewportToInject(1113, 200, view.Value, 1280, 720));
+
+        var top = VictoriaBrowserCoordMap.MapViewportToInject(100, 69, view.Value, 1280, 720);
+        Assert.Equal((100, 0), (top!.Value.GuestX, top.Value.GuestY));
+        var stretchTop = VictoriaBrowserCoordMap.TryMapPointerStretchFill(100, 69, 1131, 903, 1280, 720);
+        Assert.True(stretchTop!.Value.Y - top.Value.GuestY >= 50);
+    }
+
+    [Fact]
+    public void LiveEmbed_PictureRoundTripsOnAGrid_AndScrollShiftsX()
+    {
+        var view = new VictoriaBrowserCoordMap.EmbedViewport(0, 69, 1113, 720);
+        for (var x = 0; x < 1113; x += 37)
+        {
+            for (var y = 69; y < 69 + 720; y += 31)
+            {
+                var inject = VictoriaBrowserCoordMap.MapViewportToInject(x, y, view, 1280, 720);
+                Assert.NotNull(inject);
+                var tip = VictoriaBrowserCoordMap.TryMapGuestTipToViewport(
+                    inject!.Value.GuestX, inject.Value.GuestY, view, 1280, 720);
+                Assert.NotNull(tip);
+                Assert.Equal(x, tip!.Value.TipX);
+                Assert.Equal(y, tip.Value.TipY);
+                var back = VictoriaBrowserCoordMap.MapViewportToInject(
+                    tip.Value.TipX, tip.Value.TipY, view, 1280, 720);
+                Assert.Equal(inject.Value.GuestX, back!.Value.GuestX);
+                Assert.Equal(inject.Value.GuestY, back.Value.GuestY);
+            }
+        }
+
+        var scrolled = view with { ScrollX = 40 };
+        var shifted = VictoriaBrowserCoordMap.MapViewportToInject(100, 69, scrolled, 1280, 720);
+        Assert.Equal((140, 0), (shifted!.Value.GuestX, shifted.Value.GuestY));
+        Assert.Null(VictoriaBrowserCoordMap.TryMapGuestTipToViewport(10, 0, scrolled, 1280, 720));
+    }
+
+    [Fact]
+    public void ChooseGuestViewport_WithoutThePictureChild_ReturnsNull()
+    {
+        var frameOnly = new VictoriaBrowserCoordMap.ViewportChild[]
+        {
+            new(0, 0, 1113, 41, false),
+            new(0, 41, 1113, 789, false),
+            new(0, 69, 1113, 735, false),
+        };
+        Assert.Null(VictoriaBrowserCoordMap.ChooseGuestViewport(frameOnly, 1280, 720));
     }
 
     [Fact]

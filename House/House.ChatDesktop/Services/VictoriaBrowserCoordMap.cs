@@ -3,23 +3,14 @@ namespace House.ChatDesktop.Services;
 /// <summary>
 /// PROP-19.3 — Shared Her-screen pointer contract.
 /// <para>
-/// <b>HWND embed (Kurt inject / Victoria Absolute / soft-cursor tip)</b> — one stretch-fill map:
-/// <list type="number">
-/// <item><see cref="ResolveGuestFramebuffer"/> — live <c>IDisplay</c> &gt; hub/screenshot &gt; slot &gt; default.
-/// Never treat the embed slot as FB when display/hub disagree (Auto-resize lag).</item>
-/// <item><see cref="TryMapPointerStretchFill"/> — slot client px → guest framebuffer 0-based
-/// (<c>Round</c> AwayFromZero, clamp).</item>
-/// <item><see cref="ToAbsolute"/> — guest 0-based → VirtualBox Absolute <c>[+1,+1]</c> (SDK).
-/// Same rule as <c>VboxConsoleMouse.PlanAbsolutePress</c> in Host.</item>
-/// <item><see cref="TryMapGuestTipToSurfaceStretchFill"/> — inverse of (2): guest 0-based →
-/// soft-cursor <b>tip</b> in slot client px (no glyph centering).</item>
-/// </list>
-/// Soft-cursor tip must paint at the same Guest0 that (2)/(3) inject. Prefer
-/// <see cref="MapSlotToInject"/> when both guest and Absolute are needed.
+/// <b>HWND embed</b> — the guest is drawn 1:1 inside VirtualBox's picture child, not stretched
+/// across the slot and not letterboxed in it. Menu, status bar, and the empty band under the
+/// VM stay outside the map. <see cref="MapViewportToInject"/> is that map.
+/// <see cref="ChooseGuestViewport"/> picks the picture child (height matches the framebuffer).
 /// </para>
 /// <para>
 /// <b>JPEG / Playwright</b> — Uniform letterbox (<see cref="TryMapPointerToPage"/> /
-/// <see cref="TryMapGuestToSurfaceUniform"/>). Do not mix letterbox with embed Absolute.
+/// <see cref="MapSlotToInject"/>). That map is not the embedded VM window.
 /// </para>
 /// </summary>
 public static class VictoriaBrowserCoordMap
@@ -50,8 +41,7 @@ public static class VictoriaBrowserCoordMap
         VictoriaVmPointerPlan.ToAbsolute(guestX, guestY);
 
     /// <summary>
-    /// Slot client → Guest0 + Absolute in one step (Kurt <c>PostFromSurface</c> / hover badge).
-    /// Null when pointer is outside the surface or sizes are invalid.
+    /// JPEG / Playwright slot → Guest0 + Absolute (letterbox). Not the embedded VM window.
     /// </summary>
     public static (int GuestX, int GuestY, int AbsX, int AbsY)? MapSlotToInject(
         double pointerX,
@@ -61,7 +51,7 @@ public static class VictoriaBrowserCoordMap
         int framebufferWidth,
         int framebufferHeight)
     {
-        var guest = TryMapPointerStretchFill(
+        var guest = TryMapPointerToPage(
             pointerX, pointerY, surfaceWidth, surfaceHeight,
             framebufferWidth, framebufferHeight);
         if (guest is null)
@@ -136,6 +126,33 @@ public static class VictoriaBrowserCoordMap
     }
 
     /// <summary>
+    /// Guest0 → soft-cursor tip in slot client pixels (inverse of <see cref="TryMapPointerToPage"/>).
+    /// No glyph size — tip is the inject point. Matches the VirtualBox aspect-fit viewport.
+    /// </summary>
+    public static (double TipX, double TipY)? TryMapGuestTipToSurfaceUniform(
+        int guestX,
+        int guestY,
+        double surfaceWidth,
+        double surfaceHeight,
+        int imagePixelWidth,
+        int imagePixelHeight)
+    {
+        if (surfaceWidth <= 0 || surfaceHeight <= 0
+            || imagePixelWidth <= 0 || imagePixelHeight <= 0)
+            return null;
+
+        var scale = Math.Min(surfaceWidth / imagePixelWidth, surfaceHeight / imagePixelHeight);
+        if (scale <= 0)
+            return null;
+
+        var drawW = imagePixelWidth * scale;
+        var drawH = imagePixelHeight * scale;
+        var offsetX = (surfaceWidth - drawW) / 2.0;
+        var offsetY = (surfaceHeight - drawH) / 2.0;
+        return (offsetX + (guestX * scale), offsetY + (guestY * scale));
+    }
+
+    /// <summary>
     /// Guest0 → soft-cursor tip in slot client pixels (inverse of <see cref="TryMapPointerStretchFill"/>).
     /// No glyph size — tip is the inject point; draw the arrow with hotspot at this tip.
     /// </summary>
@@ -204,6 +221,116 @@ public static class VictoriaBrowserCoordMap
         var left = offsetX + (guestX * scale) - (cursorWidth / 2);
         var top = offsetY + (guestY * scale) - (cursorHeight / 2);
         return (left, top);
+    }
+
+    /// <summary>
+    /// Picture child of the embedded VirtualBox window, in the same client pixels as the click.
+    /// Scroll is guest pixels already off the left/top of that child. 0 until a scrollbar is read.
+    /// </summary>
+    public readonly record struct EmbedViewport(
+        int Left,
+        int Top,
+        int Width,
+        int Height,
+        int ScrollX = 0,
+        int ScrollY = 0);
+
+    /// <summary>One descendant of the embed parent. Overlay windows are not the picture.</summary>
+    public readonly record struct ViewportChild(int X, int Y, int Width, int Height, bool IsOverlay);
+
+    /// <summary>
+    /// Pick the 1:1 picture. Its height matches the guest framebuffer (the menu and the
+    /// status bar do not). Null when nothing is within 8px, so a guess cannot be injected.
+    /// </summary>
+    public static EmbedViewport? ChooseGuestViewport(
+        IReadOnlyList<ViewportChild> children,
+        int guestWidth,
+        int guestHeight)
+    {
+        if (guestWidth <= 0 || guestHeight <= 0 || children is null || children.Count == 0)
+            return null;
+
+        ViewportChild? best = null;
+        var bestScore = int.MaxValue;
+        foreach (var child in children)
+        {
+            if (child.IsOverlay || child.Width < 200 || child.Height < 200)
+                continue;
+
+            var score = Math.Abs(child.Height - guestHeight);
+            if (score > 8)
+                continue;
+
+            var better = best is null
+                || score < bestScore
+                || (score == bestScore && child.Width > best.Value.Width);
+            if (!better)
+                continue;
+
+            best = child;
+            bestScore = score;
+        }
+
+        if (best is not { } chosen)
+            return null;
+
+        return new EmbedViewport(chosen.X, chosen.Y, chosen.Width, chosen.Height);
+    }
+
+    /// <summary>
+    /// Embed client pixel → guest framebuffer. 1:1 inside <paramref name="view"/>.
+    /// Null on the menu, the status bar, the scrollbar gap, and the empty band.
+    /// </summary>
+    public static (int GuestX, int GuestY, int AbsX, int AbsY)? MapViewportToInject(
+        double pointerX,
+        double pointerY,
+        EmbedViewport view,
+        int framebufferWidth,
+        int framebufferHeight)
+    {
+        if (view.Width <= 1 || view.Height <= 1
+            || framebufferWidth <= 0 || framebufferHeight <= 0)
+            return null;
+
+        var localX = pointerX - view.Left;
+        var localY = pointerY - view.Top;
+        if (localX < 0 || localY < 0 || localX >= view.Width || localY >= view.Height)
+            return null;
+
+        var x = view.ScrollX + (int)Math.Round(localX, MidpointRounding.AwayFromZero);
+        var y = view.ScrollY + (int)Math.Round(localY, MidpointRounding.AwayFromZero);
+        if (x < view.ScrollX || y < view.ScrollY
+            || x >= view.ScrollX + view.Width || y >= view.ScrollY + view.Height
+            || x >= framebufferWidth || y >= framebufferHeight)
+            return null;
+
+        var abs = ToAbsolute(x, y);
+        return (x, y, abs.X, abs.Y);
+    }
+
+    /// <summary>
+    /// Guest pixel → soft-cursor tip in embed client pixels. Inverse of
+    /// <see cref="MapViewportToInject"/>. Null when that pixel is scrolled off the picture.
+    /// </summary>
+    public static (double TipX, double TipY)? TryMapGuestTipToViewport(
+        int guestX,
+        int guestY,
+        EmbedViewport view,
+        int framebufferWidth,
+        int framebufferHeight)
+    {
+        if (view.Width <= 1 || view.Height <= 1
+            || framebufferWidth <= 0 || framebufferHeight <= 0
+            || guestX < 0 || guestY < 0
+            || guestX >= framebufferWidth || guestY >= framebufferHeight)
+            return null;
+
+        var localX = guestX - view.ScrollX;
+        var localY = guestY - view.ScrollY;
+        if (localX < 0 || localY < 0 || localX >= view.Width || localY >= view.Height)
+            return null;
+
+        return (view.Left + localX, view.Top + localY);
     }
 
     public static string FormatClickHint(int x, int y) => $"click ({x}, {y})";

@@ -30,7 +30,7 @@ public static class VictoriaVmPointerPlan
     /// <summary>
     /// Guest 0-based framebuffer pixel → Absolute [1,1] origin (SDK).
     /// Must stay identical to Host <c>VboxConsoleMouse.PlanAbsolutePress</c> (+1,+1).
-    /// Soft-cursor tip uses Guest0 via <see cref="VictoriaBrowserCoordMap.TryMapGuestTipToSurfaceStretchFill"/>;
+    /// Soft-cursor tip uses Guest0 via <see cref="VictoriaBrowserCoordMap.TryMapGuestTipToSurfaceUniform"/>;
     /// do not paint Absolute coords.
     /// </summary>
     public static (int X, int Y) ToAbsolute(int guestX, int guestY) =>

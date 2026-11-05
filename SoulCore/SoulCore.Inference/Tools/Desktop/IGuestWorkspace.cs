@@ -19,4 +19,14 @@ public interface IGuestWorkspace
         int timeoutSeconds,
         CancellationToken ct = default,
         bool allowElevatedShell = false);
+
+    /// <summary>
+    /// Open <paramref name="path"/> in the guest VS Code or VSCodium window.
+    /// <paramref name="line"/> is 1-based and only valid for a file.
+    /// </summary>
+    Task<DesktopOpResult> OpenInEditorAsync(
+        string path,
+        int? line,
+        int? column,
+        CancellationToken ct = default);
 }

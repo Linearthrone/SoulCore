@@ -28,16 +28,30 @@ public static class VictoriaVmPointer
     private static bool _stop;
     private static string? _lastFault;
     private static int? _lockedSessionPid;
+    private static nint _embedHwnd;
 
     public static event Action<string>? Faulted;
 
     /// <summary>Fired after a successful Absolute / key delivery clears the last fault.</summary>
     public static event Action? FaultCleared;
 
-    /// <summary>Kept so the embed can name its HWND. Operator input does not park off it.</summary>
+    /// <summary>
+    /// Embed parent (the window whose client pixels the overlay reports). Used to find
+    /// the 1:1 picture child. Does not park the cursor.
+    /// </summary>
     public static void NoteHostWindow(nint hwnd)
     {
-        _ = hwnd;
+        lock (Gate)
+            _embedHwnd = hwnd;
+    }
+
+    /// <summary>Picture rect in embed-client pixels, or null when the 1:1 child is not there.</summary>
+    public static VictoriaBrowserCoordMap.EmbedViewport? TryMeasureEmbedViewport(int guestWidth, int guestHeight)
+    {
+        nint hwnd;
+        lock (Gate)
+            hwnd = _embedHwnd;
+        return VictoriaVmViewport.Measure(hwnd, guestWidth, guestHeight);
     }
 
     /// <summary>
@@ -469,7 +483,8 @@ public static class VictoriaVmPointer
         int surfaceX,
         int surfaceY,
         int surfaceW,
-        int surfaceH)
+        int surfaceH,
+        VictoriaBrowserCoordMap.EmbedViewport? viewport = null)
     {
         int hubW;
         int hubH;
@@ -488,12 +503,14 @@ public static class VictoriaVmPointer
             surfaceX,
             surfaceY,
             surfaceW,
-            surfaceH);
+            surfaceH,
+            viewport);
     }
 
     /// <summary>
-    /// Slot → guest framebuffer. Display size is already a static <c>int?</c>.
-    /// Hub is the snapshot taken before this call's display read.
+    /// Embed client pixel → guest framebuffer. The picture is the 1:1 VirtualBox child,
+    /// not a stretch of the whole slot. <paramref name="viewport"/> is for tests; live
+    /// clicks measure it from <see cref="NoteHostWindow"/>.
     /// </summary>
     internal static (int X, int Y)? MapSurfaceToGuest(
         int? displayWidth,
@@ -503,24 +520,27 @@ public static class VictoriaVmPointer
         int surfaceX,
         int surfaceY,
         int surfaceW,
-        int surfaceH)
+        int surfaceH,
+        VictoriaBrowserCoordMap.EmbedViewport? viewport = null)
     {
-        // PROP-19.3: same ResolveGuestFramebuffer + stretch-fill + Absolute as soft-cursor tip.
         var fb = VictoriaBrowserCoordMap.ResolveGuestFramebuffer(
             hubWidth, hubHeight, displayWidth, displayHeight, surfaceW, surfaceH);
-        var inject = VictoriaBrowserCoordMap.MapSlotToInject(
-            surfaceX, surfaceY, surfaceW, surfaceH, fb.Width, fb.Height);
-        if (inject is not null)
-        {
-            PresenceStartupLog.Write(
-                $"her-screen click map surface={surfaceW}x{surfaceH} pt={surfaceX},{surfaceY} " +
-                $"guest={fb.Width}x{fb.Height} guest0={inject.Value.GuestX},{inject.Value.GuestY} " +
-                $"abs={inject.Value.AbsX},{inject.Value.AbsY}" +
-                (displayWidth is > 0 ? " display=ok" : " display=fallback"));
-            return (inject.Value.GuestX, inject.Value.GuestY);
-        }
+        var view = viewport ?? TryMeasureEmbedViewport(fb.Width, fb.Height);
+        if (view is null)
+            return null;
 
-        return null;
+        var inject = VictoriaBrowserCoordMap.MapViewportToInject(
+            surfaceX, surfaceY, view.Value, fb.Width, fb.Height);
+        if (inject is null)
+            return null;
+
+        PresenceStartupLog.Write(
+            $"her-screen click map surface={surfaceW}x{surfaceH} pt={surfaceX},{surfaceY} " +
+            $"viewport={view.Value.Left},{view.Value.Top} {view.Value.Width}x{view.Value.Height} " +
+            $"guest={fb.Width}x{fb.Height} guest0={inject.Value.GuestX},{inject.Value.GuestY} " +
+            $"abs={inject.Value.AbsX},{inject.Value.AbsY}" +
+            (displayWidth is > 0 ? " display=ok" : " display=fallback"));
+        return (inject.Value.GuestX, inject.Value.GuestY);
     }
 
     [SupportedOSPlatform("windows")]

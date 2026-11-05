@@ -209,6 +209,7 @@ internal static class ToolsServiceCollectionExtensions
         services.AddSingleton<ITool, GuestReadFileTool>();
         services.AddSingleton<ITool, GuestWriteFileTool>();
         services.AddSingleton<ITool, GuestShellTool>();
+        services.AddSingleton<ITool, VsCodeOpenTool>();
         services.AddSingleton<ITool, ListDesktopWindowsTool>();
         services.AddSingleton<ITool, FocusDesktopWindowTool>();
     }

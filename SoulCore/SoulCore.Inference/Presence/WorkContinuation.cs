@@ -216,6 +216,7 @@ public static class WorkContinuation
             "guest_write_file" => "Writing a file",
             "guest_list_dir" => "Looking through files",
             "guest_shell" => "Running a command",
+            "vscode_open" => "Opening in VS Code",
             "desktop_open_app" => "Opening an app",
             "browser_navigate" => "Opening a page",
             _ when n.StartsWith("guest_", StringComparison.Ordinal) => "Working in the project",

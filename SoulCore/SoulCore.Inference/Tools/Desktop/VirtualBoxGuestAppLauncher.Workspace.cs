@@ -48,6 +48,32 @@ public sealed partial class VirtualBoxGuestAppLauncher
             sys.stdout.write(text)
         """;
 
+    private const string EditorProbeScript =
+        """
+        import os, sys
+        # hv-vscode-probe
+        path, home = sys.argv[1], sys.argv[2]
+        real = os.path.realpath(path)
+        if real != home and not real.startswith(home + "/"):
+            sys.stderr.write("path escapes guest home\n")
+            sys.exit(2)
+        if not os.path.exists(real):
+            sys.stderr.write("not found\n")
+            sys.exit(3)
+        kind = "dir" if os.path.isdir(real) else "file"
+        editor = ""
+        for candidate in ("/usr/bin/code", "/usr/bin/codium", "/snap/bin/code"):
+            if os.path.isfile(candidate) and os.access(candidate, os.X_OK):
+                editor = candidate
+                break
+        if not editor:
+            sys.stderr.write("no VS Code or VSCodium binary\n")
+            sys.exit(4)
+        print(editor)
+        print(kind)
+        print(real)
+        """;
+
     private const string PrepareWriteScript =
         """
         import os, sys
@@ -205,6 +231,53 @@ public sealed partial class VirtualBoxGuestAppLauncher
         if (text.Length == 0)
             text = "(no output)";
         return new DesktopOpResult(true, text, new { cwd = resolvedCwd, timeoutSeconds = seconds });
+    }
+
+    public async Task<DesktopOpResult> OpenInEditorAsync(
+        string path,
+        int? line,
+        int? column,
+        CancellationToken ct = default)
+    {
+        if (!TryGuestPath(path, allowEmptyAsHome: false, out var resolved, out var error))
+            return new DesktopOpResult(false, error, null);
+        if (!VsCodeLaunch.TryPlan("/usr/bin/code", resolved, directory: false, line, column, out _, out error))
+            return new DesktopOpResult(false, error, null);
+
+        var probe = await GuestRunTextAsync(
+                "/usr/bin/python3",
+                new[] { "-c", EditorProbeScript, resolved, Home },
+                timeoutMs: 20000,
+                ct)
+            .ConfigureAwait(false);
+        if (!probe.Success)
+            return probe;
+
+        var rows = (probe.Content ?? "")
+            .Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        if (rows.Length < 3)
+            return new DesktopOpResult(false, "editor probe did not report a binary", null);
+
+        var editor = rows[0];
+        var directory = string.Equals(rows[1], "dir", StringComparison.Ordinal);
+        var real = rows[2];
+        if (!VsCodeLaunch.TryPlan(editor, real, directory, line, column, out var args, out error))
+            return new DesktopOpResult(false, error, null);
+
+        var started = await GuestStartAsync(editor, args, ct).ConfigureAwait(false);
+        if (!started.Success)
+            return started;
+
+        var where = line is int n
+            ? column is int col
+                ? real + " at line " + n + ", column " + col
+                : real + " at line " + n
+            : real;
+        var name = editor.EndsWith("/codium", StringComparison.Ordinal) ? "VSCodium" : "VS Code";
+        return new DesktopOpResult(
+            true,
+            "Opened " + where + " in " + name + " (reused the guest window).",
+            new { path = real, line, column, editor });
     }
 
     private bool TryGuestPath(string? path, bool allowEmptyAsHome, out string resolved, out string error)

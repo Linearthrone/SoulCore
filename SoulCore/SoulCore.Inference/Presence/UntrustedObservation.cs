@@ -85,7 +85,7 @@ public static partial class UntrustedObservation
     private static partial Regex ConfirmedBareRegex();
 
     [GeneratedRegex(
-        @"\b(guest_shell|email_send|email_delete|mt4_|browser_navigate|desktop_open_app|task_update_status|workflow_execute)\b",
+        @"\b(guest_shell|vscode_open|email_send|email_delete|mt4_|browser_navigate|desktop_open_app|task_update_status|workflow_execute)\b",
         RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
     private static partial Regex ToolNameRegex();
 

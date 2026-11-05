@@ -27,6 +27,13 @@ public sealed class UnavailableGuestWorkspace : IGuestWorkspace
         bool allowElevatedShell = false)
         => Refuse();
 
+    public Task<DesktopOpResult> OpenInEditorAsync(
+        string path,
+        int? line,
+        int? column,
+        CancellationToken ct = default)
+        => Refuse();
+
     private static Task<DesktopOpResult> Refuse()
         => Task.FromResult(new DesktopOpResult(false, Message, null));
 }

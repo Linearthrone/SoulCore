@@ -456,19 +456,21 @@ public class VictoriaVmPointerPlanTests
     [Fact]
     public void MapSurfaceToGuest_ReturnsNullablePoint_ValueIsReadable()
     {
+        var picture = new VictoriaBrowserCoordMap.EmbedViewport(0, 69, 1113, 720);
         (int X, int Y)? mapped = VictoriaVmPointer.MapSurfaceToGuest(
-            displayWidth: null,
-            displayHeight: null,
+            displayWidth: 1280,
+            displayHeight: 720,
             hubWidth: 1280,
-            hubHeight: 800,
-            surfaceX: 450,
-            surfaceY: 300,
-            surfaceW: 900,
-            surfaceH: 600);
+            hubHeight: 720,
+            surfaceX: 484,
+            surfaceY: 141,
+            surfaceW: 1131,
+            surfaceH: 903,
+            picture);
 
         Assert.NotNull(mapped);
-        Assert.Equal(640, mapped.Value.X);
-        Assert.Equal(400, mapped.Value.Y);
+        Assert.Equal(484, mapped.Value.X);
+        Assert.Equal(72, mapped.Value.Y);
         Assert.IsType<(int X, int Y)>(mapped.Value);
     }
 
@@ -483,11 +485,12 @@ public class VictoriaVmPointerPlanTests
         dynamic session = new object();
         object sessionObject = session;
         VictoriaVmPointer.TryGetCachedGuestFrame(out var hubW, out var hubH);
+        var picture = new VictoriaBrowserCoordMap.EmbedViewport(0, 0, 900, 600);
 
         (int X, int Y)? mapped = VictoriaVmPointer.MapSurfaceFromSession(
-            sessionObject, 450, 300, 900, 600);
+            sessionObject, 450, 300, 900, 600, picture);
         (int X, int Y)? expected = VictoriaVmPointer.MapSurfaceToGuest(
-            null, null, hubW, hubH, 450, 300, 900, 600);
+            null, null, hubW, hubH, 450, 300, 900, 600, picture);
 
         Assert.Equal(expected, mapped);
         Assert.NotNull(mapped);

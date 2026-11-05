@@ -72,8 +72,11 @@ public static class ComputerUseGuidance
         "Do not invent a Playwright workaround unless she asks for Playwright.\n" +
         "3) Non-browser apps: desktop_open_app notepad|explorer|cmd|powershell|codium inside the guest. " +
         "codium is VSCodium, her IDE. " +
-        "Read and edit the guest project with guest_list_dir, guest_read_file, and guest_write_file, " +
-        "and run builds with guest_shell. Paths stay under /home/victoria. " +
+        "When a lesson says to open a folder, open a file, or go to a line in VS Code or VSCodium, " +
+        "call vscode_open with that path and line. It reuses the editor on the Her screen. " +
+        "Read and edit the text with guest_list_dir, guest_read_file, and guest_write_file, " +
+        "and run the lesson terminal with guest_shell. Do not click the file tree or command palette for those. " +
+        "Paths stay under /home/victoria. " +
         "node and npm, when installed, are on PATH via ~/.local/node/bin. " +
         "guest_shell runs sudo only when Kayleigh enables Allow guest sudo (and the guest has NOPASSWD). " +
         "Package install and pipe-to-bash stay refused. Use desktop_click only for IDE or page UI those tools cannot reach.\n" +
