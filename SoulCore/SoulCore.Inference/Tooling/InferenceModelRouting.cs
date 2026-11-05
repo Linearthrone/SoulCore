@@ -1,31 +1,83 @@
 using SoulCore.Config;
+using SoulCore.Core.Persona;
 
 namespace SoulCore.Inference.Tooling;
 
 /// <summary>
 /// Resolves chat / tool / embed Ollama model names from <see cref="InferenceOptions"/>
-/// and whether Unreal is currently live (VRAM policy).
+/// (and optional active <see cref="PersonaPack.InferenceModel"/>) plus whether Unreal
+/// is currently live (VRAM policy).
 /// </summary>
 public static class InferenceModelRouting
 {
-    public static string ResolveChatModel(InferenceOptions options)
+    /// <summary>
+    /// Chat model: pack <see cref="PersonaPack.InferenceModel"/> when set, else
+    /// Host <c>Inference:Model</c>, else <c>gemma4:latest</c>.
+    /// </summary>
+    public static string ResolveChatModel(InferenceOptions options, string? packInferenceModel = null)
     {
         ArgumentNullException.ThrowIfNull(options);
+        var fromPack = (packInferenceModel ?? string.Empty).Trim();
+        if (fromPack.Length > 0)
+            return fromPack;
         return FirstNonEmpty(options.Model, "gemma4:latest");
     }
 
     /// <summary>
-    /// Tool-loop model: <see cref="InferenceOptions.ToolModelUeLive"/> when UE live,
-    /// else <see cref="InferenceOptions.ToolModel"/>, else chat model.
+    /// Chat model for a framed persona id (v1: active only via <see cref="IPersonaSession.TryGet"/>).
     /// </summary>
-    public static string ResolveToolModel(InferenceOptions options, bool ueLive)
+    public static string ResolveChatModel(
+        InferenceOptions options,
+        IPersonaSession? session,
+        string? personaId = null)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+        return ResolveChatModel(options, ResolvePackInferenceModel(session, personaId));
+    }
+
+    /// <summary>
+    /// Tool-loop model: <see cref="InferenceOptions.ToolModelUeLive"/> when UE live,
+    /// else <see cref="InferenceOptions.ToolModel"/>, else chat model (pack → Host).
+    /// </summary>
+    public static string ResolveToolModel(
+        InferenceOptions options,
+        bool ueLive,
+        string? packInferenceModel = null)
     {
         ArgumentNullException.ThrowIfNull(options);
         if (ueLive && !string.IsNullOrWhiteSpace(options.ToolModelUeLive))
             return options.ToolModelUeLive.Trim();
         if (!string.IsNullOrWhiteSpace(options.ToolModel))
             return options.ToolModel.Trim();
-        return ResolveChatModel(options);
+        return ResolveChatModel(options, packInferenceModel);
+    }
+
+    /// <summary>
+    /// Tool-loop model for a framed persona id (v1: active only).
+    /// </summary>
+    public static string ResolveToolModel(
+        InferenceOptions options,
+        bool ueLive,
+        IPersonaSession? session,
+        string? personaId = null)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+        return ResolveToolModel(options, ueLive, ResolvePackInferenceModel(session, personaId));
+    }
+
+    /// <summary>
+    /// Pack inference model for <paramref name="personaId"/> when warm, else active pack.
+    /// </summary>
+    public static string? ResolvePackInferenceModel(IPersonaSession? session, string? personaId = null)
+    {
+        if (session is null)
+            return null;
+
+        if (!string.IsNullOrWhiteSpace(personaId)
+            && session.TryGet(personaId, out var pack))
+            return pack.InferenceModel;
+
+        return session.GetActive().InferenceModel;
     }
 
     /// <summary>

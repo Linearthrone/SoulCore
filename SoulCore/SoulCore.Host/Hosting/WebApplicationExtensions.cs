@@ -14,7 +14,10 @@ using SoulCore.Inference.Clients;
 using SoulCore.Inference.Tooling;
 using SoulCore.Core.Charter;
 using SoulCore.Core.Safety;
+using SoulCore.Core.Persona;
 using SoulCore.Host.Companion;
+using SoulCore.Host.Persona;
+using SoulCore.Host.SharedSpaces;
 using SoulCore.Host.Voice;
 using SoulCore.Host.Ws;
 using SoulCore.Inference.Tools.Browser;
@@ -70,6 +73,8 @@ internal static class WebApplicationExtensions
 
         app.MapCompanionApi();
         app.MapVoiceApi();
+        app.MapPersonaApi();
+        app.MapSharedSpacesApi();
 
         app.MapGet("/health", async (
             IOptions<HostBindOptions> opts,
@@ -83,7 +88,8 @@ internal static class WebApplicationExtensions
             IToolsAccessSettings access,
             DriftWatcher driftWatcher,
             SpendMeter spendMeter,
-            CharterService charter,
+            IPersonaStoreHub personaStores,
+            IPersonaSession personaSession,
             SoulCore.Inference.Presence.IPresenceActivityHub presenceActivity,
             SoulCore.Inference.Presence.ILeisureSession leisure,
             IVictoriaTaskStore victoriaTasks,
@@ -93,6 +99,15 @@ internal static class WebApplicationExtensions
             var inferenceOptions = inferenceOpts.Value;
             var embeddingsOn = inferenceOptions.Enabled && inferenceOptions.EmbeddingsEnabled;
             var memoryOk = memory.IsDatabaseOpen;
+            PersonaPack? activePack = null;
+            try
+            {
+                activePack = personaSession.GetActive();
+            }
+            catch (Exception)
+            {
+                // health stays up before session warm
+            }
 
             DriftStatus driftStatus;
             try
@@ -121,7 +136,11 @@ internal static class WebApplicationExtensions
             int charterTotal = 0, charterLocked = 0;
             try
             {
-                (charterTotal, charterLocked) = await charter.GetLockCountsAsync(cancellationToken).ConfigureAwait(false);
+                if (activePack is not null)
+                {
+                    var charter = personaStores.GetCharterService(activePack.PersonaId);
+                    (charterTotal, charterLocked) = await charter.GetLockCountsAsync(cancellationToken).ConfigureAwait(false);
+                }
             }
             catch (Exception)
             {
@@ -143,6 +162,10 @@ internal static class WebApplicationExtensions
                 // health stays up even if the ledger query fails
             }
 
+            var resolvedModel = activePack is null
+                ? inferenceOptions.Model
+                : InferenceModelRouting.ResolveChatModel(inferenceOptions, activePack.InferenceModel);
+
             return Results.Json(new
             {
                 status = memoryOk ? "ok" : "degraded",
@@ -151,6 +174,18 @@ internal static class WebApplicationExtensions
                 bind = opts.Value.BindAddress,
                 port = opts.Value.Port,
                 phase = 1,
+                capabilities = new { personas = true, sharedSpaces = true },
+                persona = activePack is null
+                    ? null
+                    : new
+                    {
+                        personaId = activePack.PersonaId,
+                        displayName = activePack.DisplayName,
+                        contactId = activePack.ContactId,
+                        humanAddress = activePack.HumanAddress,
+                        inferenceModel = activePack.InferenceModel,
+                        sharedSpaceIds = activePack.SharedSpaceIds ?? Array.Empty<string>()
+                    },
                 tasks = new
                 {
                     count = taskCount,
@@ -164,7 +199,9 @@ internal static class WebApplicationExtensions
                 memory = new
                 {
                     open = memoryOk,
-                    path = memory.DatabasePath
+                    path = memory.DatabasePath,
+                    personaId = activePack?.PersonaId,
+                    quarantine = "persona-scoped"
                 },
                 inference = new
                 {
@@ -173,7 +210,7 @@ internal static class WebApplicationExtensions
                         ? (inferenceOptions.IsCloudEndpoint ? "ollama-cloud" : "ollama")
                         : "null",
                     // BED-01 / TASK-157: expose configured chat model for QA/ops (no secrets).
-                    model = inferenceOptions.Model,
+                    model = resolvedModel,
                     cloud = inferenceOptions.IsCloudEndpoint,
                     baseUrl = inferenceOptions.IsCloudEndpoint ? InferenceOptions.CloudBaseUrl : "loopback",
                     embeddingsEnabled = embeddingsOn,
@@ -587,19 +624,19 @@ internal static class WebApplicationExtensions
             }
         }).AddEndpointFilter(CompanionEmailAuthFilter);
 
-        // TASK-177: Identity tab payload — Companion display name + charter anchor details
-        // (read-only from CharterService; no fabricated biography).
+        // TASK-177 / PROP-20: Identity payload from active PersonaPack + quarantined charter.
         app.MapGet("/settings/identity", async (
-            IOptions<CompanionOptions> companionOpts,
-            CharterService charter,
+            IPersonaSession personaSession,
+            IPersonaStoreHub personaStores,
             CancellationToken cancellationToken) =>
         {
-            var companion = companionOpts.Value ?? new CompanionOptions();
+            var pack = personaSession.GetActive();
             int charterTotal = 0, charterLocked = 0;
             IReadOnlyList<CharterAnchorInfo> identityAnchors = Array.Empty<CharterAnchorInfo>();
             IReadOnlyList<CharterAnchorInfo> allAnchors = Array.Empty<CharterAnchorInfo>();
             try
             {
+                var charter = personaStores.GetCharterService(pack.PersonaId);
                 (charterTotal, charterLocked) = await charter.GetLockCountsAsync(cancellationToken).ConfigureAwait(false);
                 identityAnchors = await charter.ListAnchorDetailsAsync("identity", cancellationToken).ConfigureAwait(false);
                 allAnchors = await charter.ListAnchorDetailsAsync(kind: null, cancellationToken).ConfigureAwait(false);
@@ -623,8 +660,10 @@ internal static class WebApplicationExtensions
 
             return Results.Json(new
             {
-                displayName = companion.DefaultContactName,
-                contactId = companion.DefaultContactId,
+                displayName = pack.DisplayName,
+                contactId = pack.ContactId,
+                personaId = pack.PersonaId,
+                sharedSpaceIds = pack.SharedSpaceIds ?? Array.Empty<string>(),
                 charter = new
                 {
                     anchors = charterTotal,
@@ -634,7 +673,7 @@ internal static class WebApplicationExtensions
                 },
                 identityAnchors = identityAnchors.Select(AnchorDto).ToArray(),
                 anchors = allAnchors.Select(AnchorDto).ToArray(),
-                note = "Read-only charter/identity anchors from SoulCore SQLite. Display name from Companion options (Victoria)."
+                note = "Read-only charter/identity from active persona quarantined SQLite. Display name from PersonaPack."
             });
         });
 

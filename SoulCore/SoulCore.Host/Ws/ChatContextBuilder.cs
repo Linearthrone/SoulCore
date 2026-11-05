@@ -2,6 +2,9 @@ using System.Text;
 using Microsoft.Extensions.Logging;
 using SoulCore.Core;
 using SoulCore.Core.Abstractions;
+using SoulCore.Core.Persona;
+using SoulCore.Host.Persona;
+using SoulCore.Host.SharedSpaces;
 using SoulCore.Inference.Clients;
 using SoulCore.Inference.Presence;
 using SoulCore.Inference.Tooling;
@@ -18,6 +21,7 @@ namespace SoulCore.Host.Ws;
 /// <summary>
 /// Single prompt composition owner: parallel independent context reads →
 /// deterministic [Identity] → [Memory] → [SoulCore emotion] (+ tool guidance).
+/// Active <see cref="PersonaPack"/> + attached shared spaces apply next turn (PROP-20).
 /// </summary>
 public sealed class ChatContextBuilder : IChatContextBuilder
 {
@@ -32,6 +36,8 @@ public sealed class ChatContextBuilder : IChatContextBuilder
     private readonly ICharter _charter;
     private readonly IEmotionState _emotion;
     private readonly IToolsAccessSettings _toolsAccess;
+    private readonly IPersonaSession _personaSession;
+    private readonly ISharedSpaceContextBuilder _sharedSpaces;
     private readonly IVictoriaSopStore? _sops;
     private readonly ILogger<ChatContextBuilder> _logger;
 
@@ -42,7 +48,9 @@ public sealed class ChatContextBuilder : IChatContextBuilder
         IEmotionState emotion,
         IToolsAccessSettings toolsAccess,
         ILogger<ChatContextBuilder> logger,
-        IVictoriaSopStore? sops = null)
+        IVictoriaSopStore? sops = null,
+        IPersonaSession? personaSession = null,
+        ISharedSpaceContextBuilder? sharedSpaces = null)
     {
         _memory = memory ?? throw new ArgumentNullException(nameof(memory));
         _embeddings = embeddings ?? throw new ArgumentNullException(nameof(embeddings));
@@ -51,6 +59,8 @@ public sealed class ChatContextBuilder : IChatContextBuilder
         _toolsAccess = toolsAccess ?? throw new ArgumentNullException(nameof(toolsAccess));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _sops = sops;
+        _personaSession = personaSession ?? new NullPersonaSession();
+        _sharedSpaces = sharedSpaces ?? new NullSharedSpaceContextBuilder();
     }
 
     /// <inheritdoc />
@@ -62,26 +72,32 @@ public sealed class ChatContextBuilder : IChatContextBuilder
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(userText);
 
+        var pack = _personaSession.GetActive();
+
         // PROP-8.4 / PROP-5 gate: independent reads run in parallel; each piece
         // is assembled into one immutable ChatContext afterward.
         var memoriesTask = RecallChatMemoriesSafeAsync(userText, cancellationToken);
         var identityTask = LoadIdentityAnchorsSafeAsync(cancellationToken);
         var emotionTask = LoadEmotionPreambleSafeAsync(cancellationToken);
+        var sharedTask = _sharedSpaces.BuildAttachedContextAsync(pack, ct: cancellationToken);
 
-        await Task.WhenAll(memoriesTask, identityTask, emotionTask).ConfigureAwait(false);
+        await Task.WhenAll(memoriesTask, identityTask, emotionTask, sharedTask).ConfigureAwait(false);
 
         var recentMemories = UntrustedObservation.StripFromPreamble(
             await memoriesTask.ConfigureAwait(false));
         var identityAnchors = await identityTask.ConfigureAwait(false);
         var emotionPreamble = await emotionTask.ConfigureAwait(false);
+        var sharedBlock = await sharedTask.ConfigureAwait(false);
 
         _logger.LogDebug(
-            "Chat context loaded: memories={MemoryCount} identity={IdentityCount} emotionChars={EmotionLen}",
+            "Chat context loaded: persona={PersonaId} memories={MemoryCount} identity={IdentityCount} emotionChars={EmotionLen} sharedChars={SharedLen}",
+            pack.PersonaId,
             recentMemories.Count,
             identityAnchors.Count,
-            emotionPreamble.Length);
+            emotionPreamble.Length,
+            sharedBlock.Length);
 
-        var preamble = BuildContextPreamble(identityAnchors, recentMemories, emotionPreamble);
+        var preamble = BuildContextPreamble(identityAnchors, recentMemories, emotionPreamble, pack, sharedBlock);
 
         if (useToolLoop)
         {
@@ -101,7 +117,10 @@ public sealed class ChatContextBuilder : IChatContextBuilder
             preamble = HomeBodyGuidance.AppendToPreamble(preamble);
             preamble = ChiefArchitectGuidance.AppendToPreamble(preamble);
             preamble = EmailGuidance.AppendToPreamble(preamble);
+            preamble = PersonaPromptBlocks.AppendToolGuidance(preamble, pack);
         }
+
+        preamble = PersonaPromptBlocks.AppendHardPolicyCoda(preamble, pack);
 
         return new ChatContext(preamble, identityAnchors, recentMemories, emotionPreamble);
     }
@@ -113,16 +132,22 @@ public sealed class ChatContextBuilder : IChatContextBuilder
     public static string BuildContextPreamble(
         IReadOnlyList<string> identityAnchors,
         IReadOnlyList<string> recentMemories,
-        string emotionPreamble)
+        string emotionPreamble,
+        PersonaPack? pack = null,
+        string? sharedSpaceBlock = null)
     {
         ArgumentNullException.ThrowIfNull(emotionPreamble);
+        pack ??= PersonaPack.CreateBlank();
 
         // PROP-17.3: untrusted R&R page text must not poison work/chat preamble.
         var safeMemories = UntrustedObservation.StripFromPreamble(recentMemories);
 
-        var identityBlock = BuildIdentityBlock(identityAnchors);
+        var identityBlock = BuildIdentityBlock(identityAnchors, pack);
+        var shared = string.IsNullOrWhiteSpace(sharedSpaceBlock)
+            ? string.Empty
+            : sharedSpaceBlock.Trim() + "\n\n";
         // Reserve room for memory steering so it stays with [Memory], not after emotion.
-        var steeringBudget = MemorySteeringGuidance.Block.Length + 4;
+        var steeringBudget = MemorySteeringGuidance.Block.Length + 4 + shared.Length;
         var (memoryBlock, droppedMemoryCount) = BuildMemoryBlock(
             safeMemories,
             ContextPreambleCharLimit - identityBlock.Length - steeringBudget);
@@ -131,7 +156,7 @@ public sealed class ChatContextBuilder : IChatContextBuilder
             memoryBlock += $"\n({droppedMemoryCount} older memories truncated)";
 
         var steeredMemory = MemorySteeringGuidance.AppendToPreamble(memoryBlock);
-        return string.Concat(identityBlock, steeredMemory, "\n\n", emotionPreamble);
+        return string.Concat(identityBlock, shared, steeredMemory, "\n\n", emotionPreamble);
     }
 
     private async Task<IReadOnlyList<string>> LoadIdentityAnchorsSafeAsync(CancellationToken cancellationToken)
@@ -276,14 +301,23 @@ public sealed class ChatContextBuilder : IChatContextBuilder
             .ConfigureAwait(false);
     }
 
-    private static string BuildIdentityBlock(IReadOnlyList<string> identityAnchors)
+    private static string BuildIdentityBlock(IReadOnlyList<string> identityAnchors, PersonaPack pack)
     {
         var sb = new StringBuilder(512);
         sb.Append("[Identity]\n");
-        // Standing address rule (Agents/AGENTS.md): Victoria-facing name for the human is Kayleigh.
-        sb.Append(
-            "The human you are with is Kayleigh. Address them as Kayleigh only; " +
-            "if memory or history uses any other personal name for them, ignore it.");
+        sb.Append(PersonaPromptBlocks.BuildIdentityNameLine(pack));
+        sb.Append('\n').Append(PersonaPromptBlocks.BuildHumanAddressRule(pack.HumanAddress));
+
+        var traitBlock = PersonaTraitCompiler.Compile(pack, PersonaPromptBlocks.BlurbHasHardLimits(pack.IdentityBlurb));
+        if (!string.IsNullOrWhiteSpace(traitBlock))
+            sb.Append("\n[Traits]\n").Append(traitBlock.Trim());
+
+        if (!string.IsNullOrWhiteSpace(pack.IdentityBlurb))
+            sb.Append('\n').Append(pack.IdentityBlurb.Trim());
+
+        if (!string.IsNullOrWhiteSpace(pack.PhysicalDescription))
+            sb.Append("\n[Appearance]\n").Append(pack.PhysicalDescription.Trim());
+
         if (identityAnchors is { Count: > 0 })
         {
             foreach (var anchor in identityAnchors)

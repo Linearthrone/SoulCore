@@ -83,6 +83,10 @@ builder.Services.Configure<ToolsOptions>(
     builder.Configuration.GetSection(ToolsOptions.SectionName));
 builder.Services.Configure<EmailOptions>(
     builder.Configuration.GetSection(EmailOptions.SectionName));
+builder.Services.Configure<PersonaOptions>(
+    builder.Configuration.GetSection(PersonaOptions.SectionName));
+builder.Services.Configure<SharedSpaceOptions>(
+    builder.Configuration.GetSection(SharedSpaceOptions.SectionName));
 
 var bindOptions = builder.Configuration
     .GetSection(HostBindOptions.SectionName)
@@ -127,6 +131,8 @@ if (!IsLoopback(bindOptions.BindAddress))
 builder.WebHost.UseUrls($"http://{bindOptions.BindAddress}:{bindOptions.Port}");
 
 builder.Services
+    .AddPersonaRuntime()
+    .AddSharedSpaces()
     .AddMemory(memoryOptions, safetyOptions)
     .AddInference(inferenceOptions)
     .AddTools()

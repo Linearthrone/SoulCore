@@ -1,0 +1,161 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="House.ChatDesktop.PersonaWizardWindow"
+        Title="Persona wizard"
+        Width="600" Height="720"
+        MinWidth="520" MinHeight="560"
+        WindowStartupLocation="CenterOwner"
+        CanResize="True"
+        Background="Transparent"
+        Foreground="{DynamicResource TextBrush}"
+        TransparencyLevelHint="Transparent,AcrylicBlur,None"
+        SystemDecorations="None"
+        ExtendClientAreaToDecorationsHint="True"
+        ExtendClientAreaChromeHints="NoChrome"
+        ShowInTaskbar="False">
+  <Border Classes="shell-bevel" Margin="4">
+  <Border Classes="shell">
+  <DockPanel Margin="16">
+    <DockPanel DockPanel.Dock="Bottom" Margin="0,16,0,0">
+      <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+        <Button x:Name="CancelButton" Classes="ghost" Content="Cancel" MinWidth="88" Click="Cancel_Click"/>
+        <Button x:Name="BackButton" Classes="ghost" Content="Back" MinWidth="88" IsVisible="False" Click="Back_Click"/>
+        <Button x:Name="NextButton" Classes="primary" Content="Next" MinWidth="88" Click="Next_Click"/>
+        <Button x:Name="SaveButton" Classes="primary" Content="Save" MinWidth="88" IsVisible="False" Click="Save_Click"/>
+      </StackPanel>
+      <TextBlock x:Name="StatusText" FontSize="11" Foreground="{DynamicResource MutedBrush}"
+                 TextWrapping="Wrap" VerticalAlignment="Center" Margin="0,0,12,0"/>
+    </DockPanel>
+
+    <StackPanel>
+      <TextBlock x:Name="TitleText" Text="Create persona" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,4"/>
+      <TextBlock x:Name="StepHintText" FontSize="12" Foreground="{DynamicResource MutedBrush}"
+                 TextWrapping="Wrap" Margin="0,0,0,12"
+                 Text="Step 1 — pick a template. Blank needs no persona pack."/>
+
+      <!-- Template gallery (create only) — Host GET /api/personas only -->
+      <StackPanel x:Name="TemplateStep" Spacing="8">
+        <TextBlock x:Name="HostRequiredText" FontSize="12" TextWrapping="Wrap"
+                   Foreground="{DynamicResource MutedBrush}" IsVisible="False"
+                   Text="Host persona packs required. Start SoulCore.Host on loopback :7720, then retry."/>
+        <Button x:Name="RetryTemplatesButton" Classes="ghost" Content="Retry Host packs"
+                HorizontalAlignment="Left" MinWidth="140" IsVisible="False"
+                Click="RetryTemplates_Click"/>
+        <ListBox x:Name="TemplateList" MaxHeight="360" SelectionChanged="TemplateList_SelectionChanged">
+          <ListBox.ItemTemplate>
+            <DataTemplate>
+              <StackPanel Spacing="2" Margin="4">
+                <TextBlock Text="{Binding DisplayName}" FontWeight="SemiBold"/>
+                <TextBlock Text="{Binding Description}" FontSize="11"
+                           Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap"/>
+              </StackPanel>
+            </DataTemplate>
+          </ListBox.ItemTemplate>
+        </ListBox>
+      </StackPanel>
+
+      <!-- Identity and portrait -->
+      <StackPanel x:Name="IdentityStep" Spacing="6" IsVisible="False">
+        <TextBlock Text="Display name" Foreground="{DynamicResource MutedBrush}"/>
+        <TextBox x:Name="DisplayNameBox" Classes="input" MaxLength="64" Height="36"
+                 VerticalContentAlignment="Center" Padding="8,0" TextChanged="DisplayNameBox_TextChanged"/>
+        <TextBlock Text="Persona id (Host key)" Foreground="{DynamicResource MutedBrush}" Margin="0,8,0,0"/>
+        <TextBox x:Name="PersonaIdBox" Classes="input" MaxLength="64" Height="36"
+                 VerticalContentAlignment="Center" Padding="8,0"/>
+        <TextBlock Text="Human address (how the persona speaks to the operator)"
+                   Foreground="{DynamicResource MutedBrush}" Margin="0,8,0,0" TextWrapping="Wrap"/>
+        <TextBox x:Name="HumanAddressBox" Classes="input" MaxLength="64" Height="36"
+                 VerticalContentAlignment="Center" Padding="8,0"/>
+        <TextBlock Text="Physical description"
+                   Foreground="{DynamicResource MutedBrush}" Margin="0,12,0,0" TextWrapping="Wrap"/>
+        <TextBox x:Name="PhysicalDescriptionBox" Classes="input" AcceptsReturn="True" TextWrapping="Wrap"
+                 MinHeight="96" MaxLength="1000" Padding="10" TextChanged="PhysicalDescriptionBox_TextChanged"/>
+        <DockPanel Margin="0,2,0,0">
+          <Button x:Name="DescriptionHelpButton" Classes="ghost" Content="AI help"
+                  DockPanel.Dock="Right" MinWidth="96" Click="DescriptionHelp_Click"/>
+          <TextBlock x:Name="PhysicalDescriptionCount" FontSize="11"
+                     Foreground="{DynamicResource MutedBrush}" VerticalAlignment="Center"
+                     Text="0/1000"/>
+        </DockPanel>
+        <TextBlock FontSize="11" TextWrapping="Wrap" Foreground="{DynamicResource MutedBrush}"
+                   Text="Separate from the identity blurb. AI help fills this box only, and only after the persona is already saved."/>
+      </StackPanel>
+
+      <!-- Model for this pack only -->
+      <StackPanel x:Name="ModelStep" Spacing="6" IsVisible="False">
+        <TextBlock Text="Chat model (this persona only)"
+                   Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap"/>
+        <ComboBox x:Name="InferenceModelCombo" Classes="input" Height="36"
+                  HorizontalAlignment="Stretch"
+                  SelectionChanged="InferenceModelCombo_SelectionChanged"/>
+        <TextBlock x:Name="InferenceModelHintText" FontSize="11" TextWrapping="Wrap"
+                   Foreground="{DynamicResource MutedBrush}" Margin="0,4,0,0"
+                   Text="Blank = Host default. Applies to this pack only."/>
+      </StackPanel>
+
+      <!-- One trait group. Sliders are built from PersonaTraitCatalog.All. -->
+      <ScrollViewer x:Name="TraitsStep" IsVisible="False" MaxHeight="460">
+        <StackPanel Spacing="6">
+          <TextBlock x:Name="TraitGroupTitle" FontSize="14" FontWeight="SemiBold"/>
+          <StackPanel x:Name="TraitSliderHost" Spacing="8"/>
+          <TextBlock x:Name="BandPreviewText" FontSize="11" Foreground="{DynamicResource MutedBrush}"
+                     TextWrapping="Wrap" Margin="0,8,0,0"/>
+        </StackPanel>
+      </ScrollViewer>
+
+      <!-- Identity blurb. Not the physical description. -->
+      <StackPanel x:Name="CharterStep" Spacing="8" IsVisible="False">
+        <TextBlock Text="Identity / charter seed" Foreground="{DynamicResource MutedBrush}"/>
+        <TextBox x:Name="IdentityBlurbBox" Classes="input" AcceptsReturn="True" TextWrapping="Wrap"
+                 MinHeight="160" Padding="10"/>
+        <TextBlock FontSize="11" TextWrapping="Wrap" Foreground="{DynamicResource MutedBrush}"
+                   Text="This blurb is not the physical description. Trait and charter edits apply on the next chat turn."/>
+      </StackPanel>
+
+      <StackPanel x:Name="SharedSpacesStep" Spacing="8" IsVisible="False">
+        <TextBlock Text="Shared spaces (optional)" FontWeight="SemiBold"/>
+        <TextBlock FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource MutedBrush}"
+                   Text="Private memory stays quarantined. Attach named shared spaces (comma-separated ids). Spaces are created on Save if missing. Leave blank for none."/>
+        <TextBox x:Name="SharedSpaceIdsBox" Classes="input" MaxLength="256" Height="36"
+                 VerticalContentAlignment="Center" Padding="8,0"
+                 Watermark="e.g. house-facts, team-notes"/>
+      </StackPanel>
+
+      <!-- Shared spaces (PROP-20.3): list / create / attach via Host /api/shared-spaces. -->
+      <StackPanel x:Name="SharedSpacesStep" Spacing="8" IsVisible="False">
+        <TextBlock x:Name="SharedSpacesHintText" FontSize="12" TextWrapping="Wrap"
+                   Foreground="{DynamicResource MutedBrush}"/>
+        <ListBox x:Name="SharedSpaceList" SelectionMode="Multiple,Toggle" MaxHeight="220"
+                 SelectionChanged="SharedSpaceList_SelectionChanged">
+          <ListBox.ItemTemplate>
+            <DataTemplate>
+              <StackPanel Spacing="2" Margin="4">
+                <TextBlock Text="{Binding DisplayName}" FontWeight="SemiBold"/>
+                <TextBlock Text="{Binding SpaceId}" FontSize="11"
+                           Foreground="{DynamicResource MutedBrush}"/>
+              </StackPanel>
+            </DataTemplate>
+          </ListBox.ItemTemplate>
+        </ListBox>
+        <TextBlock x:Name="SharedSpacesEmptyText" FontSize="11" TextWrapping="Wrap"
+                   Foreground="{DynamicResource MutedBrush}" IsVisible="False"/>
+        <DockPanel Margin="0,4,0,0">
+          <Button x:Name="SharedSpaceCreateButton" Classes="ghost" Content="Create space"
+                  DockPanel.Dock="Right" MinWidth="110" Margin="8,0,0,0" Click="SharedSpaceCreate_Click"/>
+          <TextBox x:Name="SharedSpaceNewNameBox" Classes="input" MaxLength="120" Height="36"
+                   VerticalContentAlignment="Center" Padding="8,0"
+                   Watermark="New shared space name"/>
+        </DockPanel>
+      </StackPanel>
+
+      <StackPanel x:Name="QuarantineStep" Spacing="8" IsVisible="False">
+        <TextBlock x:Name="QuarantineNoticeText" FontSize="12" TextWrapping="Wrap"
+                   Foreground="{DynamicResource MutedBrush}"/>
+        <TextBlock FontSize="11" TextWrapping="Wrap" Foreground="{DynamicResource MutedBrush}"
+                   Text="Saves via Host /api/personas. Every catalog trait is sent. An untouched trait is stored at its catalog default."/>
+      </StackPanel>
+    </StackPanel>
+  </DockPanel>
+  </Border>
+  </Border>
+</Window>
