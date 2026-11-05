@@ -428,7 +428,7 @@ public partial class MainWindow
 
         var win = new Window
         {
-            Title = "Victoria's screen",
+            Title = "Companion's screen",
             Width = 960,
             Height = 640,
             Background = Res("BgBrush"),
@@ -461,7 +461,7 @@ public partial class MainWindow
         switch (tag)
         {
             case "hud":
-                _popOuts.Toggle("hud", "Victoria — HUD", HudPanel, _hudDock, _hudTop);
+                _popOuts.Toggle("hud", "SoulCore — HUD", HudPanel, _hudDock, _hudTop);
                 break;
             case "chat":
                 _popOuts.Toggle("chat", "Messages", ChatPanel, _chatDock, _chatTop);

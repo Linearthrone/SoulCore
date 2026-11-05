@@ -131,7 +131,8 @@ public sealed class PresenceUpdateService
         if (string.IsNullOrWhiteSpace(name))
             return false;
         var n = name.Trim();
-        return n.Contains("HouseVictoria.Presence", StringComparison.OrdinalIgnoreCase)
+        return n.Contains("SoulCore.Presence", StringComparison.OrdinalIgnoreCase)
+            || n.Contains("HouseVictoria.Presence", StringComparison.OrdinalIgnoreCase) // legacy pack id (pre PROP-20.4)
             || n.StartsWith("releases.", StringComparison.OrdinalIgnoreCase)
             || (n.EndsWith(".nupkg", StringComparison.OrdinalIgnoreCase)
                 && n.Contains("Presence", StringComparison.OrdinalIgnoreCase))
@@ -178,7 +179,7 @@ public sealed class PresenceUpdateService
     private static HttpClient CreateGithubHttp()
     {
         var http = new HttpClient { Timeout = TimeSpan.FromSeconds(8) };
-        http.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("HouseVictoria-Presence", "1"));
+        http.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("SoulCore-Presence", "1"));
         http.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/vnd.github+json"));
         return http;
     }
@@ -186,7 +187,7 @@ public sealed class PresenceUpdateService
     private static Feed ResolveFeed(string? feedOverride)
     {
         var raw = (feedOverride
-                   ?? Environment.GetEnvironmentVariable("HOUSE_VICTORIA_UPDATE_URL")
+                   ?? Environment.GetEnvironmentVariable("SOULCORE_UPDATE_URL")
                    ?? Environment.GetEnvironmentVariable("SOULCORE_PRESENCE_UPDATE_URL")
                    ?? "").Trim();
 

@@ -77,7 +77,7 @@ public sealed class ChatMessage : INotifyPropertyChanged
     public string DisplayRole => Role switch
     {
         "user" => "You",
-        "assistant" => "Victoria",
+        "assistant" => "Companion",
         "system" => "System",
         _ => Role
     };
@@ -91,7 +91,7 @@ public sealed class ChatMessage : INotifyPropertyChanged
 
     public bool IsAssistant => Role == "assistant";
 
-    /// <summary>Contact bubble left of message (Victoria).</summary>
+    /// <summary>Contact bubble left of message (companion).</summary>
     public bool ShowLeftAvatar => IsAssistant;
 
     /// <summary>Contact bubble right of message (operator).</summary>

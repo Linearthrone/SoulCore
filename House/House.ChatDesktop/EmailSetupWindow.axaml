@@ -1,7 +1,7 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         x:Class="House.ChatDesktop.EmailSetupWindow"
-        Title="Email setup — House Victoria"
+        Title="Email setup — SoulCore"
         Width="520" Height="640"
         MinWidth="420" MinHeight="480"
         WindowStartupLocation="CenterOwner"
@@ -11,7 +11,7 @@
       <StackPanel Spacing="4" Margin="0,0,0,10">
         <TextBlock Text="Mailbox setup" FontSize="18" FontWeight="SemiBold"/>
         <TextBlock TextWrapping="Wrap" FontSize="12" Foreground="{DynamicResource MutedBrush}"
-                   Text="Operator-only. Add any mailbox id — no victoria / personal / business cap. Passwords are write-only and never listed on System."/>
+                   Text="Operator-only. Add any mailbox id — no fixed companion / personal / business cap. Passwords are write-only and never listed on System."/>
       </StackPanel>
 
       <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
@@ -19,7 +19,7 @@
           <TextBlock Text="Mailbox id" FontWeight="SemiBold"/>
           <TextBox x:Name="EmailIdBox" Classes="input" Height="36" Padding="10,0"
                    VerticalContentAlignment="Center"
-                   Watermark="e.g. victoria, kayleigh-gmail, work-alias"/>
+                   Watermark="e.g. companion, kayleigh-gmail, work-alias"/>
           <TextBlock TextWrapping="Wrap" FontSize="11" Foreground="{DynamicResource MutedBrush}"
                      Text="Stable id Host stores under. Letters, numbers, hyphen. Pick an existing row below to edit."/>
 
@@ -42,7 +42,7 @@
                        Text="Pick or create a mailbox."/>
           </Border>
 
-          <CheckBox x:Name="EmailEnabledCheck" Content="Victoria may use this mailbox"
+          <CheckBox x:Name="EmailEnabledCheck" Content="The companion may use this mailbox"
                     Margin="0,4,0,0"/>
 
           <TextBlock Text="Email address" FontWeight="SemiBold" Margin="0,8,0,0"/>
@@ -60,7 +60,7 @@
 
           <TextBlock Text="Name on outgoing mail" FontWeight="SemiBold" Margin="0,8,0,0"/>
           <TextBox x:Name="EmailDisplayNameBox" Classes="input" Height="36" Padding="10,0"
-                   VerticalContentAlignment="Center" Watermark="e.g. Victoria or LinearThrone"/>
+                   VerticalContentAlignment="Center" Watermark="e.g. Companion or LinearThrone"/>
           <TextBox x:Name="EmailUsernameBox" IsVisible="False"/>
 
           <Expander x:Name="EmailAdvancedExpander" Header="Advanced server settings"

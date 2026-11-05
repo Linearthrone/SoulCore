@@ -110,7 +110,7 @@ public partial class MainWindow : Window
             DisplayNameBox.Text = _uiSettings.DisplayName;
         if (IdentityNameText is not null)
             IdentityNameText.Text = string.IsNullOrWhiteSpace(_uiSettings.DisplayName)
-                ? "Victoria"
+                ? LocalUiSettings.DefaultDisplayName
                 : _uiSettings.DisplayName.Trim();
         _stack = new LocalStackControl(_uiSettings.SoulCoreRepoRoot);
         InitLayoutChrome();
@@ -140,7 +140,7 @@ public partial class MainWindow : Window
         _desktopViewTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1.5) };
         _desktopViewTimer.Tick += async (_, _) => await RefreshDesktopViewAsync();
 
-        // FED-196: near-live Victoria Playwright pane (~5 fps so aim cursor is visible while she drives).
+        // FED-196: near-live companion Playwright pane (~5 fps so aim cursor is visible while she drives).
         _browserViewTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(200) };
         _browserViewTimer.Tick += async (_, _) => await RefreshVictoriaBrowserViewAsync();
 
@@ -257,7 +257,7 @@ public partial class MainWindow : Window
             NavSettings.Classes.Remove("active");
         if (NavPresence is not null)
             NavPresence.IsChecked = true;
-        Title = "House Victoria — Presence";
+        Title = "SoulCore — Presence";
         _ = RefreshDesktopViewAsync();
         _ = RefreshVictoriaBrowserViewAsync();
     }
@@ -271,7 +271,7 @@ public partial class MainWindow : Window
             NavSettings.Classes.Add("active");
         if (NavPresence is not null)
             NavPresence.IsChecked = false;
-        Title = "House Victoria — Settings";
+        Title = "SoulCore — Settings";
         ApplySystemStatus(_lastHealth);
         SeedNotificationControls();
         UpdateIdentityDetail();
@@ -299,7 +299,7 @@ public partial class MainWindow : Window
 
     private void UpdateIdentityDetail()
     {
-        var name = string.IsNullOrWhiteSpace(_uiSettings.DisplayName) ? "Victoria" : _uiSettings.DisplayName.Trim();
+        var name = string.IsNullOrWhiteSpace(_uiSettings.DisplayName) ? LocalUiSettings.DefaultDisplayName : _uiSettings.DisplayName.Trim();
         if (DisplayNameBox is not null)
             DisplayNameBox.Text = name;
         if (IdentityNameText is not null)
@@ -642,7 +642,7 @@ public partial class MainWindow : Window
         {
             var dir = IoPath.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                "HouseVictoria",
+                "SoulCore",
                 "mms");
             Directory.CreateDirectory(dir);
             var dest = IoPath.Combine(dir, $"{Guid.NewGuid():N}{IoPath.GetExtension(sourcePath)}");

@@ -23,11 +23,11 @@ fun asJavaStringLiteral(value: String): String {
 }
 
 android {
-    namespace = "com.housevictoria.companion"
+    namespace = "com.soulcore.companion"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.housevictoria.companion"
+        applicationId = "com.soulcore.companion"
         minSdk = 26
         targetSdk = 34
         versionCode = 2

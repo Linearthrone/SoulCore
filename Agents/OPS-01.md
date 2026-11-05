@@ -2,14 +2,14 @@
 type: role
 id: OPS-01
 role: Operations & Deployment Engineer
-project: House Victoria
+project: SoulCore
 version: 1.5
 updated: 2026-09-03
 ---
 
 # OPS-01 · Role Entry
 
-House Victoria ops is split by machine — there is no cloud MySQL/Supervisor template anymore.
+SoulCore ops is split by machine — there is no cloud MySQL/Supervisor template anymore.
 
 | Seat | File | Scope |
 | --- | --- | --- |

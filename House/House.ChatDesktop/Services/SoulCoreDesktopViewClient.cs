@@ -40,7 +40,7 @@ public sealed class DesktopViewSnapshot
     public byte[]? ImageBytes { get; init; }
 }
 
-/// <summary>Polls Host <c>GET /desktop/view</c> + image for Presence “Victoria's screen”.</summary>
+/// <summary>Polls Host <c>GET /desktop/view</c> + image for Presence “Companion's screen”.</summary>
 public sealed class SoulCoreDesktopViewClient : IDisposable
 {
     private static readonly JsonSerializerOptions JsonOptions = new()

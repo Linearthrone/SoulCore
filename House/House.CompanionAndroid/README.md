@@ -1,8 +1,8 @@
-# House.CompanionAndroid — Victoria Link (SoulCore thin client)
+# House.CompanionAndroid — SoulCore Link (SoulCore thin client)
 
 
 
-Port of LLMOD Victoria Link UX onto SoulCore.Host — **not** HouseVictoria.App `:17890`.
+Port of LLMOD SoulCore Link UX onto SoulCore.Host — **not** the legacy standalone House app `:17890`.
 
 
 
@@ -10,9 +10,9 @@ Port of LLMOD Victoria Link UX onto SoulCore.Host — **not** HouseVictoria.App 
 
 | --- | --- |
 
-| Package / applicationId | `com.housevictoria.companion` |
+| Package / applicationId | `com.soulcore.companion` |
 
-| Launcher label | Victoria Link |
+| Launcher label | SoulCore Link |
 
 | minSdk | 26 |
 
@@ -31,9 +31,9 @@ Port of LLMOD Victoria Link UX onto SoulCore.Host — **not** HouseVictoria.App 
 
 
 
-- **Home** — single-Victoria chat (WS streaming + proactive Host pushes)
+- **Home** — single-companion chat (WS streaming + proactive Host pushes)
 
-- **Call** — video call UI (MVP: polled Victoria waist-up frames from Host/Unreal)
+- **Call** — video call UI (MVP: polled companion waist-up frames from Host/Unreal)
 
 - **MediaGen** — ComfyUI generate via Host (`POST /api/companion/v1/media/generate`)
 
@@ -57,7 +57,7 @@ Port of LLMOD Victoria Link UX onto SoulCore.Host — **not** HouseVictoria.App 
 
 | WS | `/ws` | Chat + proactive `chat.done` (`proactive=true`, optional `mediaId`) |
 
-| GET | `/api/companion/v1/contacts` | Single Victoria contact stub |
+| GET | `/api/companion/v1/contacts` | Single companion contact stub |
 
 | POST | `/api/companion/v1/messages/push` | Manual / tool outbound text (+ optional media) |
 
@@ -111,7 +111,7 @@ adb reverse tcp:7700 tcp:7700
 
 
 
-Remote: Tailscale serve — see `docs/runbooks/tailscale-serve-soulcore.md`. Exempt **Victoria Link** from OEM battery optimization for long background WS.
+Remote: Tailscale serve — see `docs/runbooks/tailscale-serve-soulcore.md`. Exempt **SoulCore Link** from OEM battery optimization for long background WS.
 
 
 

@@ -260,7 +260,7 @@ public partial class EmailSetupWindow : Window
 
         if (!account.Enabled)
         {
-            EmailReadyBanner.Text = $"{title}: turned off — Victoria will skip this mailbox.";
+            EmailReadyBanner.Text = $"{title}: turned off — the companion will skip this mailbox.";
             EmailReadyBanner.Foreground = WarnBrush();
             return;
         }

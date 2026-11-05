@@ -1,7 +1,7 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         x:Class="House.ChatDesktop.TaskAddWindow"
-        Title="Add task — House Victoria"
+        Title="Add task — SoulCore"
         Width="420" Height="220"
         MinWidth="360" MinHeight="200"
         WindowStartupLocation="CenterOwner"

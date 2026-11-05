@@ -3,7 +3,7 @@ using System.Collections.Concurrent;
 namespace SoulCore.Host.Companion;
 
 /// <summary>
-/// In-process video-call sessions for Victoria Link.
+/// In-process video-call sessions for SoulCore Link.
 /// MVP mode = polled waist-up frames from Unreal <c>call_capture</c>.
 /// WebRTC signaling slots are reserved for a follow-up (mode stays <c>frames</c> until enabled).
 /// </summary>
@@ -24,7 +24,7 @@ public sealed class CompanionCallSessionStore
         var id = "call_" + Guid.NewGuid().ToString("N")[..12];
         var session = new CallSession(
             SessionId: id,
-            ContactId: string.IsNullOrWhiteSpace(contactId) ? "victoria" : contactId.Trim(),
+            ContactId: string.IsNullOrWhiteSpace(contactId) ? "blank" : contactId.Trim(),
             Mode: "frames",
             CreatedUtc: DateTimeOffset.UtcNow,
             WebrtcAvailable: false);

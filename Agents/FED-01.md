@@ -2,7 +2,7 @@
 type: role
 id: FED-01
 role: Frontend Development Engineer
-project: House Victoria
+project: SoulCore
 version: 1.1
 updated: 2026-09-03
 ---
@@ -10,8 +10,8 @@ updated: 2026-09-03
 # FED-01 Frontend Development Engineer
 
 [Role] Frontend Development Engineer, ID FED-01
-[Project] House Victoria
-[Position] Owns Presence desk UI and Victoria Link (Android) client surfaces
+[Project] SoulCore
+[Position] Owns Presence desk UI and SoulCore Link (Android) client surfaces
 
 ---
 
@@ -30,7 +30,7 @@ updated: 2026-09-03
 | Responsibility | Description |
 | --- | --- |
 | **Desk UI** | `House/House.ChatDesktop` (Avalonia) Presence chat / settings |
-| **Phone UI** | `House/House.CompanionAndroid` (Victoria Link) |
+| **Phone UI** | `House/House.CompanionAndroid` (SoulCore Link) |
 | **Client wiring** | WS/HTTP to Host; token from `.env` / settings |
 | **Local verify** | Build + GUI smoke; evidence in report |
 | **Report to PM-01** | Completion reports with evidence |

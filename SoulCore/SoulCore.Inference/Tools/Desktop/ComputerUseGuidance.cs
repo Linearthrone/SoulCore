@@ -16,7 +16,7 @@ public static class ComputerUseGuidance
         Marker + "\n" +
         "You can act in the BACKGROUND while Kayleigh keeps their REAL OS mouse free.\n" +
         "Preferred workflow:\n" +
-        "1) Websites / Login / forms (PRIMARY): use browser_* on Victoria's dedicated Playwright Chromium " +
+        "1) Websites / Login / forms (PRIMARY): use browser_* on the companion's dedicated Playwright Chromium " +
         "(not Kayleigh's daily Chrome). browser_navigate(url) → browser_snapshot / browser_click_text / browser_fill. " +
         "Success on navigate means the page loaded — NOT that login/goal is done (goal_complete=false until " +
         "the page postcondition). Prefer role/name click_text + fill over screenshot→pixel for labeled UI.\n" +
@@ -58,7 +58,7 @@ public static class ComputerUseGuidance
     /// <summary>VirtualBox guest-primary playbook (BrowserBackend not playwright / Her screen embed).</summary>
     public const string VmBlock =
         Marker + "\n" +
-        "You drive the Ubuntu VirtualBox guest (victoria-sandbox) shown live in Presence Her screen — " +
+        "You drive the Ubuntu VirtualBox guest (SoulCoreVM) shown live in Presence Her screen — " +
         "NOT Playwright and NOT Kayleigh's Windows Chrome.\n" +
         "Preferred workflow:\n" +
         "1) Websites / Login / Chrome / Firefox: desktop_open_app firefox|chrome (opens guest Firefox) OR browser_navigate " +
@@ -68,7 +68,7 @@ public static class ComputerUseGuidance
         "NEVER tell Kayleigh you can only text/chat or that you have no browser — you control the embedded VM. " +
         "If a tool fails, report the real tool error (VM off, missing SOULCORE_VBOX_GUEST_PASS, etc.) and ask her to fix that; " +
         "do not invent a chat-only limitation.\n" +
-        "2) If a tool says the VM is powered off / not running: tell Kayleigh to start victoria-sandbox in VirtualBox, then retry. " +
+        "2) If a tool says the VM is powered off / not running: tell Kayleigh to start SoulCoreVM in VirtualBox, then retry. " +
         "Do not invent a Playwright workaround unless she asks for Playwright.\n" +
         "3) Non-browser apps: desktop_open_app notepad|explorer|cmd|powershell|codium inside the guest. " +
         "codium is VSCodium, her IDE. " +
@@ -120,7 +120,7 @@ public static class ComputerUseGuidance
                 "If URL/title did NOT change, do not wait on a popup — pick another control.\n" +
                 "If Playwright fails with setup_needed: tell Kayleigh to run install-playwright.ps1. " +
                 "Do not tell Kayleigh to start VirtualBox for a website.\n" +
-                "Do not use the host Chrome extension as Victoria's primary browser.\n" +
+                "Do not use the host Chrome extension as the companion's primary browser.\n" +
                 "Guest Additions (SOULCORE_VBOX_GUEST_PASS) preferred for VM desktop; when guest I/O fails the Host falls back " +
                 "to the scoped VirtualBox window soft path so screenshots still work.\n" +
                 "Do not claim goal done unless goal_complete=true (or Kayleigh confirms). Tool Success ≠ login complete.\n" +
@@ -130,7 +130,7 @@ public static class ComputerUseGuidance
 
         return
             "VM PRIMARY (Her screen embed): websites and desktop control use Ubuntu guest '" + title + "' " +
-            "(VirtualBox victoria-sandbox). Start that VM if tools say it is powered off.\n" +
+            "(VirtualBox SoulCoreVM). Start that VM if tools say it is powered off.\n" +
             "DESKTOP SCOPE: desktop_* is hard-scoped to that guest — NOT Kayleigh's Windows desktop.\n" +
             "Coordinates are guest framebuffer origin 0,0.\n" +
             "Website workflow:\n" +
@@ -225,7 +225,7 @@ public static class DesktopToolIntent
 
     /// <summary>
     /// Launch / open an allowlisted app — must win over UseComputer→list_windows.
-    /// Includes <c>playwright</c> (Victoria Chromium backend name).
+    /// Includes <c>playwright</c> (companion Chromium backend name).
     /// </summary>
     private static readonly Regex OpenApp = new(
         @"\b(?:open|start|launch|bring\s+up|pull\s+up|fire\s+up|open\s+up)\b[\s\S]{0,48}\b(?:google\s+chrome|chrome|msedge|microsoft\s+edge|edge|firefox|notepad|file\s+explorer|explorer|browser|playwright)\b",
@@ -267,7 +267,7 @@ public static class DesktopToolIntent
         @"\b(?:use|drive|control|operate)\b[\s\S]{0,24}\b(?:computer|desktop|pc|my\s+pc|the\s+mouse|vm|sandbox|virtual\s*box)\b|" +
         @"\b(?:click|type|login|sign\s*in|close)\b[\s\S]{0,40}\b(?:window|app|browser|firefox|notepad|file\s+explorer|chrome|edge|page|website|link|button|login)\b|" +
         @"\b(?:on\s+my\s+(?:computer|desktop|screen)|with\s+your\s+(?:cursor|mouse|agent\s+cursor))\b|" +
-        @"\b(?:in|on|inside)\s+(?:the\s+)?(?:vm|sandbox|guest|virtual\s*box|victoria-?sandbox)\b|" +
+        @"\b(?:in|on|inside)\s+(?:the\s+)?(?:vm|sandbox|guest|virtual\s*box|victoria-?sandbox|soulcore-?vm)\b|" +
         @"\bwhat(?:'s| is| are)\s+(?:open|on\s+(?:my\s+)?(?:screen|desktop|page))\b|" +
         @"\bwhat\s+windows?\s+(?:are\s+)?open\b|" +
         @"\blist\s+(?:my\s+)?(?:windows|apps)\b",
@@ -278,7 +278,7 @@ public static class DesktopToolIntent
 
     /// <summary>
     /// When <paramref name="browserBackend"/> is <c>playwright</c>, browser / Chrome / Edge /
-    /// website opens force <c>browser_navigate</c> (Victoria Chromium) instead of
+    /// website opens force <c>browser_navigate</c> (companion Chromium) instead of
     /// <c>desktop_open_app</c> (VirtualBox guest Firefox). Explicit VM / VirtualBox / guest
     /// phrasing keeps the guest desktop path.
     /// </summary>
@@ -509,7 +509,7 @@ public static class DesktopToolIntent
         return CaptureOnlyFollowOn.IsMatch(userText);
     }
 
-    /// <summary>True when Tools:BrowserBackend is playwright (Victoria Chromium).</summary>
+    /// <summary>True when Tools:BrowserBackend is playwright (companion Chromium).</summary>
     public static bool IsPlaywrightBackend(string? browserBackend) =>
         string.Equals((browserBackend ?? string.Empty).Trim(), "playwright", StringComparison.OrdinalIgnoreCase);
 
@@ -552,14 +552,14 @@ public static class DesktopToolIntent
 
     /// <summary>One-sentence ask when browser_navigate has no http(s) URL (PROP-13).</summary>
     public const string MissingNavigateUrlReply =
-        "I need a full http:// or https:// URL to open in Victoria's browser.";
+        "I need a full http:// or https:// URL to open in the companion's browser.";
 
     public static string BuildOpenedBrowserReply(string? url)
     {
         if (string.IsNullOrWhiteSpace(url)
             || string.Equals(url.Trim(), DefaultPlaywrightOpenUrl, StringComparison.OrdinalIgnoreCase))
-            return "Opened Victoria's browser.";
-        return $"Opened Victoria's browser to {url.Trim()}.";
+            return "Opened the companion's browser.";
+        return $"Opened the companion's browser to {url.Trim()}.";
     }
 
     /// <summary>Short user-facing confirm after a successful soft-dispatched open.</summary>

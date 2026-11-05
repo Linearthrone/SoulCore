@@ -30,7 +30,7 @@ public sealed class SoulCoreHealthSnapshot
     public decimal? SpendMonthlyCap { get; init; }
     public bool? SpendCapExceeded { get; init; }
 
-    /// <summary>Session gate: Victoria may click/type/drag (computer-use write path).</summary>
+    /// <summary>Session gate: the companion may click/type/drag (computer-use write path).</summary>
     public bool? AllowComputerControl { get; init; }
 
     /// <summary>Session gate: screenshot / list windows.</summary>

@@ -1,4 +1,4 @@
-# Start House Victoria TTS (Kokoro, in this repo) on 127.0.0.1:8881.
+# Start SoulCore TTS (Kokoro, in this repo) on 127.0.0.1:8881.
 # Without -Worker this returns immediately and leaves a hidden worker running,
 # so ALLSTART's timeout does not kill the model download.
 param(

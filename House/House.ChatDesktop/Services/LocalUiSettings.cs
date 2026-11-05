@@ -26,7 +26,9 @@ public sealed class LocalUiSettings
     public const double MinSightRowHeight = 120;
     public const double MinBrowserRowHeight = 120;
 
-    public string DisplayName { get; set; } = "Victoria";
+    public const string DefaultDisplayName = "Companion";
+
+    public string DisplayName { get; set; } = DefaultDisplayName;
 
     public NotificationSettings Notifications { get; set; } = new();
 
@@ -64,7 +66,7 @@ public sealed class LocalUiSettings
     public static string StorePath =>
         Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "HouseVictoria",
+            "SoulCore",
             "ui-settings.json");
 
     public static LocalUiSettings Load()
@@ -108,7 +110,7 @@ public sealed class LocalUiSettings
     public void Normalize()
     {
         if (string.IsNullOrWhiteSpace(DisplayName))
-            DisplayName = "Victoria";
+            DisplayName = DefaultDisplayName;
 
         if (WindowWidth is double w)
             WindowWidth = Clamp(w, MinWindowWidth, 4000);

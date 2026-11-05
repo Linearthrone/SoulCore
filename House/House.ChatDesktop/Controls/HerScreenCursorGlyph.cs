@@ -1,7 +1,7 @@
 namespace House.ChatDesktop.Controls;
 
 /// <summary>
-/// Arrow pointer for Victoria's soft cursor. The hotspot is the tip at (0, 0);
+/// Arrow pointer for the companion's soft cursor. The hotspot is the tip at (0, 0);
 /// the body extends down and to the right, the way a mouse cursor does.
 /// </summary>
 public static class HerScreenCursorGlyph

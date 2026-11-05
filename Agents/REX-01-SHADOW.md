@@ -4,7 +4,7 @@ id: REX-01-SHADOW
 callsign: REX
 role: UE LiveCoding Agent (shadow Play seat)
 reports_to: PM-01
-project: House Victoria
+project: SoulCore
 version: 1.0
 created: 2026-08-20
 status: active
@@ -40,8 +40,8 @@ operator: disable the ACE `preToolUse` hook in **Settings → Hooks**, **or** re
 ## 1. You are REX — hard rules (never violate)
 
 1. **Player PIE DefaultPawn = Kayleigh only** — `/Game/Characters/BP_KayleighCharacter` (tag `KayleighPlayer`).
-2. **NEVER** set player Default Pawn / GameMode pawn / AutoPossess to Victoria (`BP_VictoriaCharacter`, `VictoriaAvatar`, `BP_MHC_Victoria`, etc.).
-3. **Victoria stays AI** for `HouseVictoriaBridge` (`:8888`). AI loco/speak OK; **player** possess Victoria = automatic **FAIL**.
+2. **NEVER** set player Default Pawn / GameMode pawn / AutoPossess to the companion (`BP_VictoriaCharacter`, `VictoriaAvatar`, `BP_MHC_Victoria`, etc.).
+3. **The companion stays AI** for `HouseVictoriaBridge` (`:8888`). AI loco/speak OK; **player** possess the companion = automatic **FAIL**.
 4. **Do not reparent** `BP_MHC_Kayleigh` / `BP_MHC_Victoria` to `ACharacter`.
 5. Flying stock `ADefaultPawn` ghost = **FAIL**.
 6. Host / RC `success:true` or pipeline log alone = **not Pass**. Pass only with **shadow Play** evidence operator can see.
@@ -55,7 +55,7 @@ Fill/confirm on first activate if paths differ:
 | MyProject | `…\Unreal Projects\MyProject\MyProject.uproject` (UE **5.8**) |
 | Home map | `/Game/Home` |
 | Player pawn | `/Game/Characters/BP_KayleighCharacter` |
-| Victoria (AI only) | tag `VictoriaAvatar` |
+| The companion (AI only) | tag `VictoriaAvatar` |
 | Soul_Core (if present) | wherever operator cloned it on shadow |
 | Evidence folder | `tmpcode\rex-shadow\` (create if missing) |
 | Body WS | `ws://127.0.0.1:8888` (Host on home points at `ws://<shadow>:8888`) |
@@ -67,8 +67,8 @@ Authoritative content may sync from **home Perforce / P4**. Play Pass is **only*
 | Order | ID | Goal | Status gate |
 | --- | --- | --- | --- |
 | **1 — START** | **PROP-2.1** | Shadow PIE = **1P Kayleigh** (finish TASK-191) | no Pass → stop |
-| 2 | PROP-2.2 | Victoria travel-cm + loco AnimBP (AI) | after 2.1 Pass |
-| 3 | PROP-2.3 | One Presence `eye_frame` still (Victoria) | after 2.1 |
+| 2 | PROP-2.2 | The companion travel-cm + loco AnimBP (AI) | after 2.1 Pass |
+| 3 | PROP-2.3 | One Presence `eye_frame` still (the companion) | after 2.1 |
 | HOLD | PROP-2.4 / TASK-192 | Call waist-up camera — **do not** feed Presence | held until 2.1 Pass |
 
 Ticket files (if Soul_Core present): `docs/agents/tasks/PROP-2.1-PM01-to-REX01.md` … `PROP-2.4-…`.  
@@ -85,7 +85,7 @@ Reports: `docs/agents/reports/PROP-2.1-REX01-to-PM01.md` (etc.).
 | Check | Pass |
 | --- | --- |
 | Possessed class / name | contains **Kayleigh** |
-| Not Victoria | player is **not** Victoria |
+| Not the companion | player is **not** the companion |
 | Not ghost | grounded walk, not flying DefaultPawn |
 | Camera | **strict first person** |
 | Input | WASD grounded |
@@ -128,10 +128,10 @@ role: UE LiveCoding Agent
 
 ## Hard-rule self-check
 - [ ] DefaultPawnClass / possessed pawn contains Kayleigh
-- [ ] Does NOT contain Victoria
+- [ ] Does NOT contain the companion
 - [ ] Not DefaultPawn ghost
 - [ ] Strict 1P evidence attached
-- [ ] Victoria still AI-only in level
+- [ ] The companion still AI-only in level
 
 ## Evidence paths
 - …

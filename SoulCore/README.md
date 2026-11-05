@@ -1,4 +1,4 @@
-# SoulCore — continuous self / service (House Victoria)
+# SoulCore — continuous self / service
 
 ## Bind / health / WebSocket
 

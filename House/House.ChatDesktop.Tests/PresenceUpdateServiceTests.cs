@@ -37,7 +37,8 @@ public class PresenceUpdateServiceTests
     }
 
     [Theory]
-    [InlineData("HouseVictoria.Presence-win-Full.nupkg", true)]
+    [InlineData("SoulCore.Presence-win-Full.nupkg", true)]
+    [InlineData("HouseVictoria.Presence-win-Full.nupkg", true)] // legacy pack id
     [InlineData("releases.win.json", true)]
     [InlineData("Setup.exe", true)]
     [InlineData("notes.txt", false)]

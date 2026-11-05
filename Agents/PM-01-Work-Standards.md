@@ -331,8 +331,8 @@ After QA Pass on code changes, **SLOP-01 is next** before calling the chain done
 
 ### 9.5 Forbidden for PM
 
-Modifying `HouseVictoria.*`, running `dotnet build`, editing setup scripts, executing
-`Verify-HouseVictoriaStack.ps1`, or filing a FED/BED/DBD/SEC/OPS/QA/SLOP completion report as if PM were that role.
+Modifying `SoulCore.*`, running `dotnet build`, editing setup scripts, executing
+`Verify-SoulCoreStack.ps1`, or filing a FED/BED/DBD/SEC/OPS/QA/SLOP completion report as if PM were that role.
 Emergency fallback only (see Â§1) and must sync a task ticket immediately.
 
 ---

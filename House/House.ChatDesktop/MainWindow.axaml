@@ -1,7 +1,7 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         x:Class="House.ChatDesktop.MainWindow"
-        Title="House Victoria — Presence"
+        Title="SoulCore — Presence"
         Height="780" Width="1180"
         MinHeight="600" MinWidth="900"
         Background="Transparent"
@@ -12,7 +12,7 @@
         ExtendClientAreaChromeHints="NoChrome"
         ExtendClientAreaTitleBarHeightHint="-1"
         WindowStartupLocation="CenterScreen"
-        Icon="/Assets/house-victoria.ico">
+        Icon="/Assets/soulcore.ico">
   <!-- Frameless shell — thick metal bevel (dark→bright→dark refraction) -->
   <Border Classes="shell-bevel" Margin="4">
   <Border Classes="shell">
@@ -34,7 +34,7 @@
               </Border>
               <StackPanel Spacing="2" VerticalAlignment="Center">
                 <StackPanel Orientation="Horizontal" Spacing="8">
-                  <TextBlock x:Name="IdentityNameText" Text="Victoria" FontWeight="SemiBold" FontSize="16"/>
+                  <TextBlock x:Name="IdentityNameText" Text="Companion" FontWeight="SemiBold" FontSize="16"/>
                   <Ellipse x:Name="MoodColorDot" Width="8" Height="8" Fill="{DynamicResource MutedBrush}"
                            VerticalAlignment="Center"/>
                   <TextBlock x:Name="MoodLabelText" Text="—" FontSize="12" FontWeight="SemiBold"
@@ -53,7 +53,7 @@
               </StackPanel>
               <!-- brand center-ish -->
               <StackPanel Margin="24,0,0,0" VerticalAlignment="Center" Opacity="0.85">
-                <TextBlock Text="HOUSE VICTORIA" FontSize="11" FontWeight="Bold"
+                <TextBlock Text="SOULCORE" FontSize="11" FontWeight="Bold"
                            Foreground="{DynamicResource MutedBrush}" LetterSpacing="1.5"/>
                 <TextBlock x:Name="EndpointText" Text="127.0.0.1:7700" FontSize="10"
                            Foreground="{DynamicResource MutedBrush}" Opacity="0.6"/>
@@ -267,7 +267,7 @@
                   <TextBox x:Name="ChatInput" Classes="input" AcceptsReturn="True"
                            TextWrapping="Wrap" MinHeight="40" MaxHeight="140"
                            VerticalContentAlignment="Top" Padding="10,8"
-                           Watermark="Message Victoria…  (Enter to send)"
+                           Watermark="Message your companion…  (Enter to send)"
                            TextChanged="ChatInput_TextChanged"/>
                 </DockPanel>
               </Grid>
@@ -311,7 +311,7 @@
                     FontWeight="SemiBold"
                     VerticalAlignment="Center"
                     Click="VmPowerButton_Click"
-                    ToolTip.Tip="Start victoria-sandbox"/>
+                    ToolTip.Tip="Start SoulCoreVM"/>
           </Grid>
           <!-- Plain Grid (not TabControl) so Her screen always measures to full slot —
                custom TabControl templates left the embed host at 0×0 / blank. -->
@@ -325,7 +325,7 @@
                           ToolTip.Tip="VM embed: live VirtualBox + her pink/teal cursor. Coords stay in the header row. Clicks go to the VM. JPEG: hover to copy click (x,y).">
                     <Grid>
                       <TextBlock x:Name="VictoriaBrowserEmptyText"
-                                 Text="Waiting for Victoria's browser — pink cursor idle, teal on click"
+                                 Text="Waiting for the companion's browser — pink cursor idle, teal on click"
                                  Foreground="{DynamicResource MutedBrush}" FontSize="11" TextWrapping="Wrap"
                                  Margin="10" VerticalAlignment="Center" HorizontalAlignment="Center"/>
                       <Image x:Name="VictoriaBrowserImage" Stretch="Uniform" IsVisible="False"
@@ -576,7 +576,7 @@
                     <Panel Width="52" Height="52">
                       <Ellipse x:Name="GlowSandbox" Width="52" Height="52" IsHitTestVisible="False"/>
                       <Button x:Name="LampSandbox" Classes="lamp" Tag="sandbox" IsEnabled="False"
-                              ToolTip.Tip="victoria-sandbox VM"
+                              ToolTip.Tip="SoulCoreVM VM"
                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Panel>
                   </Border>
@@ -658,9 +658,9 @@
                           IsChecked="True" FontWeight="SemiBold" Margin="0,0,0,6" Click="ToolsAccessToggle_Click"/>
                 <CheckBox x:Name="ToolsSoftCursorRestoreCheck" Content="Agent cursor — don't move my mouse"
                           IsChecked="True" Margin="0,0,0,6" Click="ToolsAccessToggle_Click"/>
-                <CheckBox x:Name="ToolsVmEmbedPaneCheck" Content="Embed VirtualBox (victoria-sandbox) in Her screen"
+                <CheckBox x:Name="ToolsVmEmbedPaneCheck" Content="Embed VirtualBox (SoulCoreVM) in Her screen"
                           IsChecked="True" FontWeight="SemiBold" Margin="0,0,0,16" Click="ToolsAccessToggle_Click"
-                          ToolTip.Tip="SetParent the running VM window into Her screen. Keep victoria-sandbox visible (not minimized)."/>
+                          ToolTip.Tip="SetParent the running VM window into Her screen. Keep SoulCoreVM visible (not minimized)."/>
                 <TextBlock Text="Trading (MT4)" FontWeight="SemiBold" Margin="0,0,0,6"/>
                 <CheckBox x:Name="ToolsAllowMt4ReadCheck" Content="Allow MT4 read (status, symbols, positions)"
                           Margin="0,0,0,6" Click="ToolsAccessToggle_Click"/>
@@ -748,7 +748,7 @@
                              Text="None loaded — use Tools &amp; Access → Email setup."
                              Margin="0,0,0,12"/>
 
-                  <TextBlock Text="Guest VM (victoria-sandbox)" FontWeight="SemiBold" Margin="0,0,0,4"/>
+                  <TextBlock Text="Guest VM (SoulCoreVM)" FontWeight="SemiBold" Margin="0,0,0,4"/>
                   <TextBlock TextWrapping="Wrap" FontSize="11" Foreground="{DynamicResource MutedBrush}" Margin="0,0,0,6"
                              Text="Operator buttons via VBoxManage. Presence does not auto-start the VM."/>
                   <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,0,0,4">

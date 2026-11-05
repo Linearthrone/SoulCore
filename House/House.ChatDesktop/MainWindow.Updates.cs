@@ -45,7 +45,7 @@ public partial class MainWindow
             BuildVersionsText.Text = $"Presence {presence} · Host {host}";
         if (UpdateHostVersionBox is not null)
             UpdateHostVersionBox.Text = host;
-        Title = $"House Victoria — Presence {presence}";
+        Title = $"SoulCore — Presence {presence}";
     }
 
     private async void UpdateCheck_Click(object? sender, RoutedEventArgs e) =>

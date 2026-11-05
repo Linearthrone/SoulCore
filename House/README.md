@@ -1,4 +1,4 @@
-# House/ — thin apps (House Victoria)
+# House/ — thin apps (SoulCore)
 
 ## Ownership
 

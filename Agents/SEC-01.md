@@ -2,7 +2,7 @@
 type: role
 id: SEC-01
 role: Security Development Engineer
-project: House Victoria
+project: SoulCore
 version: 1.0
 created: 2026-07-22
 updated: 2026-07-22
@@ -11,7 +11,7 @@ updated: 2026-07-22
 # SEC-01 Security Development Engineer
 
 [Role] Security Development Engineer, ID SEC-01
-[Project] House Victoria
+[Project] SoulCore
 [Position] Owns application security â€” authn/authz, threat hardening, secure coding fixes, and security review of changes
 
 ---

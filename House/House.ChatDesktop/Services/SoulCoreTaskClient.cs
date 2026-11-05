@@ -29,7 +29,7 @@ public sealed record TaskListFetch(IReadOnlyList<PresenceTaskRow> Tasks, string?
 public sealed record TaskWriteResult(bool Ok, string? Problem, PresenceTaskRow? Task = null);
 
 /// <summary>
-/// Operator task ledger against Host <c>/tasks</c>. Victoria also has <c>task_*</c> tools.
+/// Operator task ledger against Host <c>/tasks</c>. The companion also has <c>task_*</c> tools.
 /// </summary>
 public sealed class SoulCoreTaskClient : IDisposable
 {

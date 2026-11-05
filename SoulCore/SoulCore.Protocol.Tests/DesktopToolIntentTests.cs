@@ -156,7 +156,7 @@ public class DesktopToolIntentTests
     {
         Assert.Contains("NEVER tell Kayleigh you can only text/chat", ComputerUseGuidance.VmBlock, StringComparison.Ordinal);
         Assert.Contains("Her screen", ComputerUseGuidance.VmBlock, StringComparison.Ordinal);
-        Assert.Contains("victoria-sandbox", ComputerUseGuidance.VmBlock, StringComparison.Ordinal);
+        Assert.Contains("SoulCoreVM", ComputerUseGuidance.VmBlock, StringComparison.Ordinal);
         Assert.Contains("When Kayleigh gives click", ComputerUseGuidance.VmBlock, StringComparison.Ordinal);
         Assert.Contains("browser_click_text-only limitation", ComputerUseGuidance.VmBlock, StringComparison.Ordinal);
         Assert.Contains("not Coursera unless she said so", ComputerUseGuidance.VmBlock, StringComparison.Ordinal);

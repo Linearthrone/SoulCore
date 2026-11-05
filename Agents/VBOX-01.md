@@ -4,7 +4,7 @@ id: VBOX-01
 callsign: VBOX
 role: VirtualBox + Ubuntu Admin
 reports_to: PM-01
-project: House Victoria
+project: SoulCore
 version: 1.0
 created: 2026-08-17
 status: active
@@ -24,7 +24,7 @@ status: active
 | ID / Callsign | **VBOX-01** / **VBOX** |
 | Reports to | **PM-01** (TINA) for tickets; operator for live VM ops |
 | Host | Windows · `C:\Program Files\Oracle\VirtualBox\VBoxManage.exe` |
-| Canonical VM | **`victoria-sandbox`** `{84a8bcd0-a678-4692-843d-77c0bd235428}` |
+| Canonical VM (SoulCoreVM) | **`victoria-sandbox`** (registered name) `{84a8bcd0-a678-4692-843d-77c0bd235428}` |
 | Guest user | `victoria` |
 | CUA window title | `victoria-sandbox` (BED-188) |
 
@@ -36,7 +36,7 @@ status: active
 | **`house-victoria`** | Physical shadow PC (Unreal body `:8888`) | **REX-01** / **OPS-01** |
 | **main** | SoulCore.Host `:7700`, Ollama, ChatDesktop | **OPS-01** / **BED-01** |
 
-Soul stays on main. Body stays on shadow. The Ubuntu VM is Victoria’s **sandboxed desktop**, not the Unreal editor.
+Soul stays on main. Body stays on shadow. The Ubuntu VM is the companion's **sandboxed desktop**, not the Unreal editor.
 
 ## 3. Ownership
 

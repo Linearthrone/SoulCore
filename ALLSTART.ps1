@@ -1,7 +1,7 @@
 #Requires -Version 5.1
 <#
 .SYNOPSIS
-  Start local SoulCore.Host (Victoria), wait until healthy, then launch House.ChatDesktop.
+  Start local SoulCore.Host, wait until healthy, then launch House.ChatDesktop.
 .DESCRIPTION
   Starts Host (Ollama tool-loop + desktop tools). Opens Chrome/sites via desktop_open_app.
   Refuses to attach the GUI to a foreign :7700 occupant (e.g. Cursor cloud port-forward to a
@@ -62,19 +62,19 @@ function Get-HealthObject {
     }
 }
 
-function Test-LocalVictoriaHealth {
+function Test-LocalSoulCoreHealth {
     param($Health)
     if ($null -eq $Health) { return $false }
     if ("$($Health.service)" -ne "SoulCore.Host") { return $false }
     $path = [string]$Health.memory.path
     if ([string]::IsNullOrWhiteSpace($path)) { return $false }
 
-    # Canonical Windows Victoria memory
+    # Canonical Windows SoulCore memory
     $expectedRoot = Join-Path $env:LOCALAPPDATA "SoulCore"
     if ($path.StartsWith($expectedRoot, [StringComparison]::OrdinalIgnoreCase)) { return $true }
     if ($path -match '(?i)\\AppData\\Local\\SoulCore\\') { return $true }
 
-    # Cloud / Linux agent Host - not this machine's Victoria
+    # Cloud / Linux agent Host - not this machine's SoulCore
     if ($path -match '^/home/' -or $path -match '/\.local/share/SoulCore') { return $false }
     if ($path -match '(?i)/ubuntu/') { return $false }
 
@@ -138,30 +138,30 @@ function Start-LocalSoulCore {
         -TimeoutSec $HostStartTimeoutSec
     if ($result.TimedOut) {
         # Host may still have come up before the wrapper timed out.
-        if (Test-LocalVictoriaHealth -Health (Get-HealthObject -LocalPort $LocalPort)) {
-            Write-Warning "start-soulcore.ps1 timed out, but local Victoria is healthy on :$LocalPort - continuing"
+        if (Test-LocalSoulCoreHealth -Health (Get-HealthObject -LocalPort $LocalPort)) {
+            Write-Warning "start-soulcore.ps1 timed out, but local SoulCore is healthy on :$LocalPort - continuing"
             return
         }
         throw "start-soulcore.ps1 timed out after ${HostStartTimeoutSec}s on port $LocalPort"
     }
     if ($result.ExitCode -ne 0) {
-        if (Test-LocalVictoriaHealth -Health (Get-HealthObject -LocalPort $LocalPort)) {
-            Write-Warning "start-soulcore.ps1 exit $($result.ExitCode), but local Victoria is healthy on :$LocalPort - continuing"
+        if (Test-LocalSoulCoreHealth -Health (Get-HealthObject -LocalPort $LocalPort)) {
+            Write-Warning "start-soulcore.ps1 exit $($result.ExitCode), but local SoulCore is healthy on :$LocalPort - continuing"
             return
         }
         throw "start-soulcore.ps1 failed on port $LocalPort (exit $($result.ExitCode))"
     }
 }
 
-function Wait-LocalVictoria {
+function Wait-LocalSoulCore {
     param([int]$LocalPort, [int]$TimeoutSec)
     $url = "http://127.0.0.1:${LocalPort}/health"
-    Write-Host "Waiting for local Victoria Host at $url ..."
+    Write-Host "Waiting for local SoulCore Host at $url ..."
     $deadline = [DateTime]::UtcNow.AddSeconds($TimeoutSec)
     while ([DateTime]::UtcNow -lt $deadline) {
         $h = Get-HealthObject -LocalPort $LocalPort
-        if (Test-LocalVictoriaHealth -Health $h) {
-            Write-Host "Local Victoria Host healthy."
+        if (Test-LocalSoulCoreHealth -Health $h) {
+            Write-Host "Local SoulCore Host healthy."
             Write-Host "  memory: $($h.memory.path)"
             if ($null -ne $h.inference.model) {
                 Write-Host "  model:  $($h.inference.model)"
@@ -170,7 +170,7 @@ function Wait-LocalVictoria {
         }
         Start-Sleep -Milliseconds 400
     }
-    throw "Local Victoria Host did not become healthy within ${TimeoutSec}s ($url)"
+    throw "Local SoulCore Host did not become healthy within ${TimeoutSec}s ($url)"
 }
 
 function Test-OllamaChatModel {
@@ -283,40 +283,40 @@ if (-not $browserBridgeOk -and -not $SkipBrowserBridge) {
 
 Write-Host "CUA gate: AllowComputerControl stays off until ChatDesktop Services or Tools and Access enable it."
 
-Write-Host "=== ALLSTART: locate local Victoria Host ==="
+Write-Host "=== ALLSTART: locate local SoulCore Host ==="
 $chosenPort = $Port
 $existing = Get-HealthObject -LocalPort $Port
 
-if (Test-LocalVictoriaHealth -Health $existing) {
+if (Test-LocalSoulCoreHealth -Health $existing) {
     if ($RestartHost) {
-        Write-Host "RestartHost: replacing local Victoria on :$Port"
+        Write-Host "RestartHost: replacing local SoulCore on :$Port"
         Start-LocalSoulCore -LocalPort $Port
-        Wait-LocalVictoria -LocalPort $Port -TimeoutSec $HealthTimeoutSec | Out-Null
+        Wait-LocalSoulCore -LocalPort $Port -TimeoutSec $HealthTimeoutSec | Out-Null
     } else {
-        Write-Host "Already running local Victoria on :$Port"
+        Write-Host "Already running local SoulCore on :$Port"
         Write-Host "  memory: $($existing.memory.path)"
         Write-Host "  Tip: after .env / guestcontrol changes use: .\ALLSTART.ps1 -RestartHost"
     }
 } elseif ($null -ne $existing) {
-    Write-Warning "Port $Port answers /health but is NOT this machine's Victoria."
+    Write-Warning "Port $Port answers /health but is NOT this machine's SoulCore."
     Write-Warning "  foreign memory.path = $($existing.memory.path)"
     Write-Warning "  (Often Cursor cloud port-forward / remote agent Host.)"
     Write-Warning "Starting local SoulCore on alternate port $AlternatePort instead."
     $chosenPort = $AlternatePort
     $alt = Get-HealthObject -LocalPort $AlternatePort
-    if (-not (Test-LocalVictoriaHealth -Health $alt)) {
+    if (-not (Test-LocalSoulCoreHealth -Health $alt)) {
         Write-Host "=== ALLSTART: SoulCore.Host :$chosenPort ==="
         Start-LocalSoulCore -LocalPort $chosenPort
-        Wait-LocalVictoria -LocalPort $chosenPort -TimeoutSec $HealthTimeoutSec | Out-Null
+        Wait-LocalSoulCore -LocalPort $chosenPort -TimeoutSec $HealthTimeoutSec | Out-Null
     } else {
-        Write-Host "Local Victoria already on :$AlternatePort"
+        Write-Host "Local SoulCore already on :$AlternatePort"
     }
 } else {
     Write-Host "=== ALLSTART: SoulCore.Host :$chosenPort ==="
     Start-LocalSoulCore -LocalPort $chosenPort
     # start-soulcore exits early if *anything* listens - re-validate identity
     $after = Get-HealthObject -LocalPort $chosenPort
-    if (-not (Test-LocalVictoriaHealth -Health $after)) {
+    if (-not (Test-LocalSoulCoreHealth -Health $after)) {
         if ($null -ne $after) {
             Write-Warning "Port $chosenPort still foreign after start-soulcore (race/stolen port)."
             Write-Warning "  foreign memory.path = $($after.memory.path)"
@@ -324,9 +324,9 @@ if (Test-LocalVictoriaHealth -Health $existing) {
             Write-Warning "Falling back to :$chosenPort"
             Start-LocalSoulCore -LocalPort $chosenPort
         }
-        Wait-LocalVictoria -LocalPort $chosenPort -TimeoutSec $HealthTimeoutSec | Out-Null
+        Wait-LocalSoulCore -LocalPort $chosenPort -TimeoutSec $HealthTimeoutSec | Out-Null
     } else {
-        Write-Host "Local Victoria Host healthy on :$chosenPort"
+        Write-Host "Local SoulCore Host healthy on :$chosenPort"
         Write-Host "  memory: $($after.memory.path)"
     }
 }
@@ -446,5 +446,5 @@ if ($SkipVoice) {
     }
 }
 
-Write-Host "=== ALLSTART: House.ChatDesktop (Victoria Presence) ==="
+Write-Host "=== ALLSTART: House.ChatDesktop (SoulCore Presence) ==="
 & $StartGui -Configuration $Configuration

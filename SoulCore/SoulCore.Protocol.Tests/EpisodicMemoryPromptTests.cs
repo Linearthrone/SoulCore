@@ -96,7 +96,7 @@ public class EpisodicMemoryPromptTests
     {
         Assert.Contains("first-person", EpisodicMemoryPrompt.SystemInstruction);
         Assert.Contains("Past tense", EpisodicMemoryPrompt.SystemInstruction);
-        Assert.Contains("Victoria", EpisodicMemoryPrompt.SystemInstruction);
+        Assert.Contains("companion", EpisodicMemoryPrompt.SystemInstruction);
         Assert.Equal(96, EpisodicMemoryPrompt.AuthorMaxTokens);
     }
 

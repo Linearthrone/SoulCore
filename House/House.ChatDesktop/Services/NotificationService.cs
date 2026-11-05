@@ -6,7 +6,7 @@ using System.Text.Json;
 namespace House.ChatDesktop.Services;
 
 /// <summary>
-/// Plays a notification sound when Victoria sends a message while the window
+/// Plays a notification sound when the companion sends a message while the window
 /// is unfocused or minimised. Uses a user-configurable .wav file when set;
 /// otherwise falls back to the OS default beep. Cross-platform: on Windows
 /// uses <see cref="SoundPlayer"/>; on Linux/macOS falls back to a simple

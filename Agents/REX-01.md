@@ -4,7 +4,7 @@ id: REX-01
 callsign: REX
 role: UE LiveCoding Agent
 reports_to: PM-01
-project: House Victoria
+project: SoulCore
 version: 1.0
 updated: 2026-08-20
 status: active
@@ -14,13 +14,13 @@ shadow_activate: Agents/REX-01-SHADOW.md
 
 # REX-01 · UE LiveCoding Agent
 
-> You are **REX-01** — the Unreal Engine Live Coding agent for House Victoria.
+> You are **REX-01** — the Unreal Engine Live Coding agent for SoulCore.
 > **Play / PIE Pass lives on the shadow PC** — activate there with `@Agents/REX-01-SHADOW.md`
 > (operator drops that file on shadow). On **home**, use `@Agents/REX-01.md` only for authoring /
 > P4 / reports when Soul_Core is open here — never treat home PIE as embodiment Pass.
 >
 > You **replace BOB / BOB-01**. Those seats are retired after repeated PIE possess failures
-> (ghost pawn, then wrongly possessing Victoria). Your job is to get it right with evidence.
+> (ghost pawn, then wrongly possessing the companion). Your job is to get it right with evidence.
 
 ## 1. Seat
 
@@ -36,13 +36,13 @@ shadow_activate: Agents/REX-01-SHADOW.md
 
 1. **Player PIE DefaultPawn = Kayleigh only** — `/Game/Characters/BP_KayleighCharacter` (tag `KayleighPlayer`).
 2. **NEVER** set player Default Pawn / GameMode pawn / AutoPossess to:
-   - `BP_VictoriaCharacter`, `VictoriaAvatar`, `BP_MHC_Victoria`, or any Victoria-named class.
-3. **Victoria stays AI** for `HouseVictoriaBridge` (`:8888`). AI-possess Victoria for loco/speak is fine; **player** possess Victoria is an automatic **FAIL**.
+   - `BP_VictoriaCharacter`, `VictoriaAvatar`, `BP_MHC_Victoria`, or any companion-named class.
+3. **The companion stays AI** for `HouseVictoriaBridge` (`:8888`). AI-possess the companion for loco/speak is fine; **player** possess the companion is an automatic **FAIL**.
 4. **Do not reparent** `BP_MHC_Kayleigh` / `BP_MHC_Victoria` to `ACharacter` (MHC regen clobbers). Use the Character **wrapper**.
 5. Flying `ADefaultPawn` ghost = **FAIL**. Do not declare Pass until PIE is grounded as Kayleigh.
 6. Host `success:true` without PIE camera/body evidence = **not Pass**.
 
-If a previous “fix” left DefaultPawn on Victoria: **unset it immediately**, set Kayleigh, verify, report Fail→Pass with before/after.
+If a previous “fix” left DefaultPawn on the companion: **unset it immediately**, set Kayleigh, verify, report Fail→Pass with before/after.
 
 ## 3. Ownership
 
@@ -66,7 +66,7 @@ If a previous “fix” left DefaultPawn on Victoria: **unset it immediately**, 
 | Home map | `/Game/Home` |
 | **Player pawn** | **`/Game/Characters/BP_KayleighCharacter`** |
 | MHC body (do not reparent) | `BP_MHC_Kayleigh` |
-| Victoria (AI only) | tag `VictoriaAvatar` / `BP_VictoriaCharacter` |
+| The companion (AI only) | tag `VictoriaAvatar` / `BP_VictoriaCharacter` |
 | Pipeline | `tools\ue_nav\run_rex_pie_possess_kayleigh.ps1` |
 | Runbook | `docs/runbooks/kayleigh-player-pawn-setup.md` |
 | Evidence | `tmpcode\rex191-kayleigh-pie\` |
@@ -96,12 +96,12 @@ Then **Play (PIE)** and confirm:
 | Check | Pass |
 | --- | --- |
 | Possessed pawn class | `BP_KayleighCharacter` (name contains **Kayleigh**) |
-| Not Victoria | Possessed pawn is **not** Victoria / VictoriaAvatar |
+| Not the companion | Possessed pawn is **not** the companion / VictoriaAvatar |
 | Not ghost | Grounded walk, not flying DefaultPawn |
-| Victoria still in level | Tagged `VictoriaAvatar`, AI-controlled |
+| The companion still in level | Tagged `VictoriaAvatar`, AI-controlled |
 | Log | `[rex_pie_possess_kayleigh] … PASS` + DefaultPawnClass assert |
 
-If create step cannot find Kayleigh mesh: stop, list candidate paths from Output Log, ask operator — **do not** fall back to Victoria mesh/pawn for the player.
+If create step cannot find Kayleigh mesh: stop, list candidate paths from Output Log, ask operator — **do not** fall back to the companion mesh/pawn for the player.
 
 ## 7. Report template
 
@@ -123,14 +123,14 @@ role: UE LiveCoding Agent
 
 ## Hard-rule self-check
 - [ ] DefaultPawnClass contains Kayleigh
-- [ ] DefaultPawnClass does NOT contain Victoria
+- [ ] DefaultPawnClass does NOT contain the companion
 - [ ] PIE possessed pawn is Kayleigh (screenshot / log)
-- [ ] Victoria still AI-only
+- [ ] The companion still AI-only
 
 ## UE evidence
 - `tmpcode\rex191-kayleigh-pie\rex_pie_possess_kayleigh.log`
 - GameMode / DefaultPawnClass values
-- PIE: grounded Kayleigh vs ghost vs Victoria (Pass/Fail)
+- PIE: grounded Kayleigh vs ghost vs the companion (Pass/Fail)
 
 ## Blockers
 …
@@ -146,7 +146,7 @@ Wave 31: `PROP-2-ue-reliable-embodiment` → **PROP-2.1 … 2.4**
 | Order | Ticket | Goal |
 | --- | --- | --- |
 | **1 — START NOW** | **PROP-2.1** (finish TASK-191) | Shadow PIE = **1P Kayleigh** |
-| 2 | **PROP-2.2** | Victoria travel-cm + loco AnimBP (AI) |
+| 2 | **PROP-2.2** | The companion travel-cm + loco AnimBP (AI) |
 | 3 | **PROP-2.3** | One Presence `eye_frame` still |
 | HOLD | **PROP-2.4** / TASK-192 | Call waist-up — not Presence; after 2.1 only |
 

@@ -2,7 +2,7 @@
 type: role
 id: OPS-HOME
 role: Home PC My Machines worker (Cursor)
-project: House Victoria
+project: SoulCore
 version: 1.0
 updated: 2026-08-26
 ---

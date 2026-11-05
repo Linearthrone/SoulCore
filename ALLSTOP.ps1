@@ -1,10 +1,10 @@
 ﻿#Requires -Version 5.1
 <#
 .SYNOPSIS
-  Stop House.ChatDesktop and local SoulCore.Host (Victoria).
+  Stop House.ChatDesktop and local SoulCore.Host.
 .DESCRIPTION
   Does not kill foreign :7700 occupants (e.g. Cursor cloud port-forward).
-  Stops local Host on 7700 and/or 7701 when /health memory path is this machine's Victoria.
+  Stops local Host on 7700 and/or 7701 when /health memory path is this machine's SoulCore.
   Also stops browser bridge (:17891) and local voice STT/TTS (:8000 / :8881).
 .EXAMPLE
   .\ALLSTOP.ps1
@@ -23,7 +23,7 @@ $PidFile = Join-Path $RepoRoot "SoulCore\scripts\.soulcore-host.pid"
 $BindAddress = "127.0.0.1"
 $TailscaleServe = Join-Path $RepoRoot "SoulCore\scripts\tailscale-serve-soulcore.ps1"
 
-function Test-LocalVictoriaHealth {
+function Test-LocalSoulCoreHealth {
     param($Health)
     if ($null -eq $Health) { return $false }
     if ("$($Health.service)" -ne "SoulCore.Host") { return $false }
@@ -91,14 +91,14 @@ function Stop-LocalHostOnPort {
         return
     }
 
-    if (-not (Test-LocalVictoriaHealth -Health $health)) {
-        Write-Warning "Leaving :${LocalPort} alone - not local Victoria (memory=$($health.memory.path))"
+    if (-not (Test-LocalSoulCoreHealth -Health $health)) {
+        Write-Warning "Leaving :${LocalPort} alone - not local SoulCore (memory=$($health.memory.path))"
         return
     }
 
     $pids = @(Get-LoopbackListenerPids -LocalPort $LocalPort)
     if ($pids.Count -eq 0) {
-        Write-Host "Local Victoria answered :${LocalPort} but no loopback listener PID found."
+        Write-Host "Local SoulCore answered :${LocalPort} but no loopback listener PID found."
         return
     }
 
@@ -109,7 +109,7 @@ function Stop-LocalHostOnPort {
             Write-Warning "Skipping Cursor PID $procId on :${LocalPort}"
             continue
         }
-        Write-Host "Stopping local Victoria Host PID $procId ($name) on :${LocalPort}"
+        Write-Host "Stopping local SoulCore Host PID $procId ($name) on :${LocalPort}"
         Stop-Process -Id $procId -Force -ErrorAction SilentlyContinue
     }
 }
@@ -175,7 +175,7 @@ if (-not (Test-Path -LiteralPath $TailscaleServe)) {
     }
 }
 
-Write-Host "=== ALLSTOP: SoulCore.Host (local Victoria only) ==="
+Write-Host "=== ALLSTOP: SoulCore.Host (local SoulCore only) ==="
 foreach ($port in $Ports) {
     Stop-LocalHostOnPort -LocalPort $port
 }
@@ -184,7 +184,7 @@ foreach ($port in $Ports) {
 if (Test-Path -LiteralPath $StopHost) {
     foreach ($port in $Ports) {
         $health = Get-HealthObject -LocalPort $port
-        if ($null -eq $health -or (Test-LocalVictoriaHealth -Health $health)) {
+        if ($null -eq $health -or (Test-LocalSoulCoreHealth -Health $health)) {
             & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $StopHost -Port $port 2>$null | Out-Host
         }
     }
@@ -200,8 +200,8 @@ foreach ($port in $Ports) {
     $h = Get-HealthObject -LocalPort $port
     if ($null -eq $h) {
         Write-Host ":${port} free (no /health)"
-    } elseif (Test-LocalVictoriaHealth -Health $h) {
-        Write-Warning ":${port} still local Victoria - may need manual kill"
+    } elseif (Test-LocalSoulCoreHealth -Health $h) {
+        Write-Warning ":${port} still local SoulCore - may need manual kill"
     } else {
         Write-Host ":${port} still occupied by foreign Host (left alone)"
     }

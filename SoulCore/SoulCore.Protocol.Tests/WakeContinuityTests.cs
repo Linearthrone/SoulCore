@@ -27,7 +27,7 @@ public class WakeContinuityTests
         Assert.Contains("do not start as a beginner", block, StringComparison.Ordinal);
         Assert.Contains("Last exchange: 2026-10-25T15:10:11Z", block, StringComparison.Ordinal);
         Assert.Contains("Kayleigh: did you finish the video yet?", block, StringComparison.Ordinal);
-        Assert.Contains("Victoria: I am watching the Tree Stories video.", block, StringComparison.Ordinal);
+        Assert.Contains("Companion: I am watching the Tree Stories video.", block, StringComparison.Ordinal);
         Assert.DoesNotContain("BE101", block, StringComparison.Ordinal);
     }
 
@@ -41,8 +41,8 @@ public class WakeContinuityTests
         };
 
         var block = WakeContinuity.BuildLeftOffBlock(lines);
-        var victoria = block.Split("Victoria: ", 2)[1].TrimEnd();
+        var companion = block.Split("Companion: ", 2)[1].TrimEnd();
 
-        Assert.Equal(WakeContinuity.LineCharLimit, victoria.Length);
+        Assert.Equal(WakeContinuity.LineCharLimit, companion.Length);
     }
 }

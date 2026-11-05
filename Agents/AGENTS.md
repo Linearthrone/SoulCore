@@ -8,7 +8,7 @@ docs, PRs, logs, comments, fixtures, paths).
 | Context | Use |
 | --- | --- |
 | Notes, PRs, docs, runbooks, agent reports, UI labels for the human | **LinearThrone** |
-| Copy Victoria reads or says about the human (system prompts, tool guidance, SMS preamble, confirmation asks) | **Kayleigh** |
+| Copy the companion reads or says about the human (system prompts, tool guidance, SMS preamble, confirmation asks) | **Kayleigh** |
 | Unreal player pawn / MetaHuman asset named Kayleigh | keep as the **avatar** name (same person in-world) |
 
 If you find a forbidden name, scrub it before merge. No aliases, no “historical”
@@ -16,7 +16,7 @@ exceptions in active product trees.
 
 ## Cursor Cloud specific instructions
 
-SoulCore.AI ("House Victoria") is a single .NET 8 product: a persistent AI-companion
+SoulCore.AI is a single .NET 8 product: a persistent AI-companion
 backend (`SoulCore.Host`, ASP.NET Core / Kestrel) that chats over a WebSocket protocol,
 persists state in embedded SQLite, and optionally drives an Unreal Engine avatar. The
 desktop client (`House/House.ChatDesktop`) is a thin GUI front-end built with
@@ -103,7 +103,7 @@ Dispatch from [cursor.com/agents](https://cursor.com/agents) picking **home-pc**
   never Hermes MCP.
 - Unreal Engine avatar bridge (`:8888`) is optional; the Host logs a warning and continues
   when it is unreachable (`unreal.connected=false` in `/health`).
-- **victoria-sandbox (VirtualBox):** set `SOULCORE_VBOX_GUEST_USER=victoria` and
+- **SoulCoreVM (VirtualBox; registered VM name is still `victoria-sandbox`, see TECHDEBT in `docs/agents/PROP_SOULCORE_PERSONA.md`):** set `SOULCORE_VBOX_GUEST_USER=victoria` and
   `SOULCORE_VBOX_GUEST_PASS` (Ubuntu login password) in `SoulCore/.env`, then restart Host.
   Probe with `dotnet run --project SoulCore/SoulCore.Host -c Release -- --guestcontrol-probe`.
   Manual `VBoxManage guestcontrol … run --exe /usr/bin/whoami --` — do **not** pass the exe

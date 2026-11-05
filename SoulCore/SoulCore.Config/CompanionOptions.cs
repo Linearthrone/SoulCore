@@ -1,7 +1,7 @@
 namespace SoulCore.Config;
 
 /// <summary>
-/// Victoria Link / companion phone surface (WS push + HTTP media).
+/// SoulCore Link / companion phone surface (WS push + HTTP media).
 /// Single-contact stub for now; <see cref="DefaultContactId"/> reserved for a future
 /// external persona service.
 /// </summary>
@@ -9,11 +9,11 @@ public sealed class CompanionOptions
 {
     public const string SectionName = "Companion";
 
-    /// <summary>Built-in Victoria contact id (framework stub for multi-persona later).</summary>
-    public string DefaultContactId { get; set; } = "victoria";
+    /// <summary>Built-in default contact id (framework stub for multi-persona later).</summary>
+    public string DefaultContactId { get; set; } = "blank";
 
     /// <summary>Display name for the default contact.</summary>
-    public string DefaultContactName { get; set; } = "Victoria";
+    public string DefaultContactName { get; set; } = "Blank";
 
     /// <summary>ComfyUI HTTP base (loopback by default).</summary>
     public string ComfyUiBaseUrl { get; set; } = "http://127.0.0.1:8188";

@@ -2,7 +2,7 @@
 type: role
 id: SLOP-01
 role: Slop Auditor
-project: House Victoria
+project: SoulCore
 version: 1.0
 created: 2026-07-22
 updated: 2026-07-22
@@ -11,7 +11,7 @@ updated: 2026-07-22
 # SLOP-01 Â· Slop Auditor
 
 [Role] Slop Auditor, ID SLOP-01
-[Project] House Victoria
+[Project] SoulCore
 [Position] Post-QA code hygiene auditor â€” finds slop, duplicates, and same-purpose aliases; flags for PM-01; does not edit code
 
 ---

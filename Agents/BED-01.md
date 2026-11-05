@@ -2,7 +2,7 @@
 type: role
 id: BED-01
 role: Backend Development Engineer
-project: House Victoria
+project: SoulCore
 version: 1.1
 updated: 2026-09-03
 ---
@@ -10,7 +10,7 @@ updated: 2026-09-03
 # BED-01 Backend Development Engineer
 
 [Role] Backend Development Engineer, ID BED-01
-[Project] House Victoria
+[Project] SoulCore
 [Position] Owns SoulCore Host / Inference / Memory server-side logic
 
 ---

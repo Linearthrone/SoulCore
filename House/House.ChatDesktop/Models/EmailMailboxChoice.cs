@@ -24,7 +24,7 @@ public sealed class EmailMailboxChoice
             return "Mailbox";
         return key.ToLowerInvariant() switch
         {
-            "victoria" => "Victoria's mailbox",
+            "victoria" => "Companion's mailbox",
             "personal" => "LinearThrone's personal mail",
             "business" => "LinearThrone's business mail",
             _ => key
@@ -33,7 +33,7 @@ public sealed class EmailMailboxChoice
 
     public static string DefaultDisplayNameFor(string id) => id.Trim().ToLowerInvariant() switch
     {
-        "victoria" => "Victoria",
+        "victoria" => "Companion",
         "personal" or "business" => "LinearThrone",
         _ => ""
     };
@@ -63,7 +63,7 @@ public sealed class EmailMailboxChoice
         return $"{whose} · needs setup";
     }
 
-    /// <summary>Every Host account, sorted — never invents victoria|personal|business slots.</summary>
+    /// <summary>Every Host account, sorted — never invents preset mailbox slots.</summary>
     public static IReadOnlyList<EmailMailboxChoice> BuildList(IReadOnlyList<EmailAccountSnapshot> accounts)
     {
         var list = new List<EmailMailboxChoice>();

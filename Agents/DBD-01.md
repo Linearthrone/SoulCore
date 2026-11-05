@@ -2,7 +2,7 @@
 type: role
 id: DBD-01
 role: Database Development Engineer
-project: House Victoria
+project: SoulCore
 version: 1.1
 updated: 2026-09-03
 ---
@@ -10,7 +10,7 @@ updated: 2026-09-03
 # DBD-01 Database Development Engineer
 
 [Role] Database Development Engineer, ID DBD-01
-[Project] House Victoria
+[Project] SoulCore
 [Position] Owns SoulCore SQLite continuity schema, indexes, and migrations
 
 ---

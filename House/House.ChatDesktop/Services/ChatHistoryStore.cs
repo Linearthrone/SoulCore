@@ -30,7 +30,7 @@ public sealed class ChatHistoryStore : IDisposable
     public static string DefaultDbPath =>
         Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "HouseVictoria",
+            "SoulCore",
             "presence-chat.db");
 
     public IReadOnlyList<ChatMessage> LoadRecent(

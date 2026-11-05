@@ -21,7 +21,7 @@ public class LocalUiSettingsLayoutTests
 
         s.Normalize();
 
-        Assert.Equal("Victoria", s.DisplayName);
+        Assert.Equal(LocalUiSettings.DefaultDisplayName, s.DisplayName);
         Assert.Equal(LocalUiSettings.MinWindowWidth, s.WindowWidth);
         Assert.Equal(LocalUiSettings.MinWindowHeight, s.WindowHeight);
         Assert.Equal(LocalUiSettings.MinSideColumnWidth, s.SideColumnWidth);
@@ -87,7 +87,7 @@ public class LocalUiSettingsLayoutTests
         {
             var original = new LocalUiSettings
             {
-                DisplayName = "Victoria",
+                DisplayName = "Companion",
                 WindowWidth = 1400,
                 WindowHeight = 900,
                 WindowX = 40,

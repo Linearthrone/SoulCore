@@ -9,7 +9,7 @@ public static class CompanionTokenStore
     public static string StorePath =>
         Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "HouseVictoria",
+            "SoulCore",
             "companion-api-token.txt");
 
     public static bool HasSavedToken()

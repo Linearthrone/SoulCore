@@ -6,14 +6,14 @@ namespace House.ChatDesktop.Services;
 /// <summary>
 /// PROP-4.2: WinExe builds exit silently on crash — write a startup trail and
 /// show a MessageBox on fatal errors so Setup.exe / Start Menu launches are diagnosable.
-/// Log: %LocalAppData%\HouseVictoria\presence-startup.log
+/// Log: %LocalAppData%\SoulCore\presence-startup.log
 /// </summary>
 public static class PresenceStartupLog
 {
     public static string LogPath =>
         Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "HouseVictoria",
+            "SoulCore",
             "presence-startup.log");
 
     public static void Write(string message)

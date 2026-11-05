@@ -1,4 +1,4 @@
-# PROP-4.2 - pack House Victoria Presence as a Velopack Windows installer.
+# PROP-4.2 - pack SoulCore Presence as a Velopack Windows installer.
 #
 # Prerequisites (Windows):
 #   dotnet tool install -g vpk
@@ -20,7 +20,7 @@
 # Presence auto-starts SoulCore.Host + Ollama on open when Auto-start is enabled (default).
 # Point Settings > System > SoulCore repo folder at your checkout (folder with ALLSTART.ps1),
 # or set HOUSE_SOULCORE_REPO - required when the app is installed outside the repo.
-# Updates: Presence checks GitHub Releases (Linearthrone/SoulCore.AI) or HOUSE_VICTORIA_UPDATE_URL.
+# Updates: Presence checks GitHub Releases (Linearthrone/SoulCore.AI) or SOULCORE_UPDATE_URL.
 # -Publish uploads presence-releases/* to a GitHub Release tag presence-v{version} so Update works.
 # Prefer -Bump (or House/scripts/bump-versions.ps1) before packing so every fix gets a new version.
 #
@@ -56,7 +56,7 @@ if (-not $Version) {
 $publishDir = Join-Path $repo 'House\artifacts\presence-publish'
 $releaseDir = Join-Path $repo 'House\artifacts\presence-releases'
 $buildRoot = Join-Path $repo 'House\artifacts\presence-bin\'
-$ico = Join-Path $repo 'House\House.ChatDesktop\Assets\house-victoria.ico'
+$ico = Join-Path $repo 'House\House.ChatDesktop\Assets\soulcore.ico'
 
 Write-Host "Publishing Presence $Version ..."
 if (Test-Path $publishDir) { Remove-Item -Recurse -Force $publishDir }
@@ -76,7 +76,7 @@ New-Item -ItemType Directory -Force -Path $releaseDir | Out-Null
 
 $packArgs = @(
   'pack',
-  '--packId', 'HouseVictoria.Presence',
+  '--packId', 'SoulCore.Presence',
   '--packVersion', $Version,
   '--packDir', $publishDir,
   '--mainExe', 'House.ChatDesktop.exe',
@@ -93,10 +93,10 @@ if ($LASTEXITCODE -ne 0) { throw 'vpk pack failed' }
 
 Write-Host ''
 Write-Host "Done. Installer folder: $releaseDir"
-Write-Host 'Installer file: HouseVictoria.Presence-win-Setup.exe (Velopack renames Setup.exe).'
+Write-Host 'Installer file: SoulCore.Presence-win-Setup.exe (Velopack renames Setup.exe).'
 Write-Host 'IMPORTANT: Setup.exe is the INSTALLER - it installs, launches Presence once, then exits.'
-Write-Host 'If nothing appears, open Start Menu -> HouseVictoria.Presence (or House Victoria Presence),'
-Write-Host 'and check %LocalAppData%\HouseVictoria\presence-startup.log for a crash trail.'
+Write-Host 'If nothing appears, open Start Menu -> SoulCore.Presence (or SoulCore Presence),'
+Write-Host 'and check %LocalAppData%\SoulCore\presence-startup.log for a crash trail.'
 Write-Host 'Then Presence Settings > Updates (or title Update) to check for newer releases.'
 
 if ($Publish) {
@@ -117,7 +117,7 @@ if ($Publish) {
     Write-Host "Creating GitHub Release $tag ..."
     & gh release create $tag @assets `
       --title "Presence $Version" `
-      --notes "House Victoria Presence $Version (Velopack). Install Setup.exe, or use Update in an existing install. Host is separate - restart Host for Playwright/tool fixes."
+      --notes "SoulCore Presence $Version (Velopack). Install Setup.exe, or use Update in an existing install. Host is separate - restart Host for Playwright/tool fixes."
     if ($LASTEXITCODE -ne 0) { throw "gh release create failed for $tag" }
   }
 

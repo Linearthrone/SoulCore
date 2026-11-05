@@ -1,5 +1,5 @@
 """
-Local speech-to-text for House Victoria. Same contract the Host already uses:
+Local speech-to-text for SoulCore. Same contract the Host already uses:
 POST /transcribe with multipart field "audio" or "file" returns {"text": "..."}.
 GET /health is the health check.
 
@@ -28,7 +28,7 @@ MODEL_DIR = Path(os.environ.get("HOUSE_STT_MODEL_DIR", str(ROOT / "models" / "wh
 
 _model = None
 
-app = FastAPI(title="House Victoria STT", version="1.0")
+app = FastAPI(title="SoulCore STT", version="1.0")
 
 
 def get_model():

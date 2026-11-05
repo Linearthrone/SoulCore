@@ -4,7 +4,7 @@ namespace SoulCore.Core;
 
 /// <summary>
 /// Prompt contract so recalled episodic lines steer action instead of flavoring chat.
-/// Without this, Victoria can surface Maestro/class memories in [Memory] and still
+/// Without this, the companion can surface Maestro/class memories in [Memory] and still
 /// rediscover the procedure as if brand new.
 /// </summary>
 public static class MemorySteeringGuidance

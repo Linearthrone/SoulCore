@@ -949,7 +949,7 @@ public partial class MainWindow
 
     private async void VmStart_Click(object? sender, RoutedEventArgs e)
     {
-        if (VmStatusText is not null) VmStatusText.Text = "Starting victoria-sandbox…";
+        if (VmStatusText is not null) VmStatusText.Text = "Starting SoulCoreVM…";
         var result = await _stack.StartSandboxVmAsync().ConfigureAwait(true);
         if (VmStatusText is not null)
             VmStatusText.Text = result.Ok ? $"Start: {result.Detail}" : $"Start failed: {result.Detail}";
@@ -958,7 +958,7 @@ public partial class MainWindow
 
     private async void VmSave_Click(object? sender, RoutedEventArgs e)
     {
-        if (VmStatusText is not null) VmStatusText.Text = "Saving victoria-sandbox state…";
+        if (VmStatusText is not null) VmStatusText.Text = "Saving SoulCoreVM state…";
         var result = await _stack.SaveSandboxVmAsync().ConfigureAwait(true);
         if (VmStatusText is not null)
             VmStatusText.Text = result.Ok ? $"Save state: {result.Detail}" : $"Save failed: {result.Detail}";
@@ -968,11 +968,11 @@ public partial class MainWindow
     private async void VmPowerOff_Click(object? sender, RoutedEventArgs e)
     {
         var ok = await ConfirmYesNoAsync(
-            "Power off victoria-sandbox now?\n\nUnsaved guest work may be lost. Prefer Save state when you can.",
+            "Power off SoulCoreVM now?\n\nUnsaved guest work may be lost. Prefer Save state when you can.",
             "Power off VM").ConfigureAwait(true);
         if (!ok) return;
 
-        if (VmStatusText is not null) VmStatusText.Text = "Powering off victoria-sandbox…";
+        if (VmStatusText is not null) VmStatusText.Text = "Powering off SoulCoreVM…";
         var result = await _stack.PowerOffSandboxVmAsync().ConfigureAwait(true);
         if (VmStatusText is not null)
             VmStatusText.Text = result.Ok ? $"Power off: {result.Detail}" : $"Power off failed: {result.Detail}";
@@ -1666,7 +1666,7 @@ public partial class MainWindow
         var proactive = ReadPayloadBool(frame, "proactive") == true;
         var provider = ReadPayloadString(frame, "provider");
 
-        // SoulLoop phrase-bank / automated pings — not Victoria speaking.
+        // SoulLoop phrase-bank / automated pings — not the companion speaking.
         if (proactive
             && string.Equals(provider, "soul-loop", StringComparison.OrdinalIgnoreCase)
             && IsAutomatedProactiveLine(text))
@@ -1762,7 +1762,7 @@ public partial class MainWindow
         {
             var dir = IoPath.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                "HouseVictoria",
+                "SoulCore",
                 "mms");
             Directory.CreateDirectory(dir);
             var path = IoPath.Combine(dir, $"{bubble.MediaId}.bin");

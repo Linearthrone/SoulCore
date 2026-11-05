@@ -47,7 +47,7 @@ internal static class Program
         {
             PresenceStartupLog.WriteException("Main fatal", ex);
             PresenceStartupLog.ShowFatal(
-                "House Victoria Presence failed to start",
+                "SoulCore Presence failed to start",
                 ex.Message);
             Environment.ExitCode = 1;
         }

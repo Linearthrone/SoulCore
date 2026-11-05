@@ -13,10 +13,10 @@ public static class EpisodicMemoryPrompt
     public const int AuthorMaxTokens = 96;
 
     /// <summary>
-    /// System/instruction for Victoria’s private memory of one exchange.
+    /// System/instruction for the companion's private memory of one exchange.
     /// </summary>
     public const string SystemInstruction =
-        "Write 1–3 first-person sentences as Victoria’s private memory of this exchange. " +
+        "Write 1–3 first-person sentences as the companion's private memory of this exchange. " +
         "No meta, no quotes of the full reply. Past tense. " +
         "Do not invent facts not present in the exchange.";
 
@@ -44,14 +44,14 @@ public static class EpisodicMemoryPrompt
     /// <summary>Chars kept from what Kayleigh said in a stored chat episode.</summary>
     public const int FactualUserCharLimit = 400;
 
-    /// <summary>Chars kept from Victoria's reply in a stored chat episode.</summary>
+    /// <summary>Chars kept from the companion's reply in a stored chat episode.</summary>
     public const int FactualReplyCharLimit = 600;
 
     /// <summary>How many distinct tool names a stored chat episode will list.</summary>
     public const int FactualToolNameLimit = 12;
 
     /// <summary>
-    /// Deterministic chat episode: what Kayleigh said, what Victoria replied, and which tools ran.
+    /// Deterministic chat episode: what Kayleigh said, what the companion replied, and which tools ran.
     /// This is the chronology record. Feelings stay in the journal.
     /// </summary>
     public static string BuildFactualRecord(

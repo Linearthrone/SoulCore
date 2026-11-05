@@ -25,7 +25,7 @@ if (-not $exe) {
 }
 if (-not $exe) { throw 'House.ChatDesktop.exe not found after build' }
 
-$ico = Join-Path $repo 'House\House.ChatDesktop\Assets\house-victoria.ico'
+$ico = Join-Path $repo 'House\House.ChatDesktop\Assets\soulcore.ico'
 $wshell = New-Object -ComObject WScript.Shell
 
 function New-Shortcut([string]$path, [string]$target) {
@@ -33,15 +33,15 @@ function New-Shortcut([string]$path, [string]$target) {
   $sc.TargetPath = $target
   $sc.WorkingDirectory = Split-Path $target -Parent
   if (Test-Path $ico) { $sc.IconLocation = "$ico,0" }
-  $sc.Description = 'House Victoria - Presence'
+  $sc.Description = 'SoulCore - Presence'
   $sc.Save()
   Write-Host "Wrote $path"
 }
 
-$startDir = Join-Path $env:APPDATA 'Microsoft\Windows\Start Menu\Programs\House Victoria'
+$startDir = Join-Path $env:APPDATA 'Microsoft\Windows\Start Menu\Programs\SoulCore'
 New-Item -ItemType Directory -Force -Path $startDir | Out-Null
-New-Shortcut (Join-Path $startDir 'House Victoria Presence.lnk') $exe
-New-Shortcut (Join-Path $env:USERPROFILE 'Desktop\House Victoria Presence.lnk') $exe
+New-Shortcut (Join-Path $startDir 'SoulCore Presence.lnk') $exe
+New-Shortcut (Join-Path $env:USERPROFILE 'Desktop\SoulCore Presence.lnk') $exe
 
 Write-Host "Done. Launch from Start Menu or Desktop. Exe: $exe"
 Write-Host 'For a real installer + Update button feed: House/scripts/pack-presence.ps1 -> run Setup.exe.'

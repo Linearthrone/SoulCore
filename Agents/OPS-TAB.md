@@ -2,7 +2,7 @@
 type: role
 id: OPS-TAB
 role: Tablet gateway (Tasker HTTP primary — Termux optional)
-project: House Victoria
+project: SoulCore
 version: 1.5
 updated: 2026-09-03
 ---
@@ -25,7 +25,7 @@ third-party automation.
 
 ## Kill #1 — Pass (2026-09-02)
 
-Real SMS from operator’s phone → Tab MDN → ChatDesktop + Victoria reply verified.
+Real SMS from operator’s phone → Tab MDN → ChatDesktop + companion reply verified.
 
 **Working recipe:** Tasker **HTTP Request only** (HTTPS `:8443`), Body `{"fromE164":"%SMSRF","text":"%SMSRB"}`, Var `%SOULCORE_TOKEN`.  
 No Send Intent. No JavaScriptlet for normal texts. Profile **Received Text** must be **On** (Play is manual-only).
@@ -42,7 +42,7 @@ Or Tasker **Send SMS** from inbound `replyText` — **not both**.
 
 ## Scope
 
-- Maintain Tasker HTTP + Termux scripts (`sms-to-victoria.sh`, `sms-ping.sh`, `sms-outbound-poll.sh`)
+- Maintain Tasker HTTP + Termux scripts (`sms-to-soulcore.sh`, `sms-ping.sh`, `sms-outbound-poll.sh`)
 - Tailscale reachability notes (`:7700` / `:8443`)
 - Never put companion tokens in git or agent prompts
 

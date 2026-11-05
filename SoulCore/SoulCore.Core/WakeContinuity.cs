@@ -3,7 +3,7 @@ using System.Text;
 namespace SoulCore.Core;
 
 /// <summary>
-/// Chronology Victoria is handed on every turn, including the first turn after Host restarts.
+/// Chronology the companion is handed on every turn, including the first turn after Host restarts.
 /// The conversation transcript is the current thread. Similar episodic recall stays separate.
 /// </summary>
 public static class WakeContinuity
@@ -61,7 +61,7 @@ public static class WakeContinuity
         if (user is not null)
             sb.Append("Kayleigh: ").Append(Truncate(user)).Append('\n');
         if (assistant is not null)
-            sb.Append("Victoria: ").Append(Truncate(assistant)).Append('\n');
+            sb.Append("Companion: ").Append(Truncate(assistant)).Append('\n');
         sb.Append('\n');
         return sb.ToString();
     }

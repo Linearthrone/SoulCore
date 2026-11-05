@@ -1,5 +1,5 @@
 """
-Local TTS for House Victoria. Speaks the same contract the Host already uses:
+Local TTS for SoulCore. Speaks the same contract the Host already uses:
 POST / with JSON {text, voice?} returns a WAV body. GET / is the health check.
 
 Engine is Kokoro ONNX (in this repo). Model files download into
@@ -44,7 +44,7 @@ VOICE_ALIASES = {
 
 _kokoro = None
 
-app = FastAPI(title="House Victoria TTS", version="1.0")
+app = FastAPI(title="SoulCore TTS", version="1.0")
 
 
 class TtsRequest(BaseModel):
