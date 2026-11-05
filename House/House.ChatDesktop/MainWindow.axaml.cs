@@ -163,6 +163,7 @@ public partial class MainWindow : Window
             await RefreshDesktopViewAsync();
             await RefreshVictoriaBrowserViewAsync();
             await EnsureDesktopBrowserDefaultsAsync();
+            await RefreshPersonasAsync().ConfigureAwait(true);
         };
 
         // Detach SetParent'd VirtualBox BEFORE the Avalonia host HWND dies. Closing only
@@ -275,6 +276,7 @@ public partial class MainWindow : Window
         ApplySystemStatus(_lastHealth);
         SeedNotificationControls();
         UpdateIdentityDetail();
+        _ = RefreshPersonasAsync();
         _ = RefreshToolsAccessAsync();
         _ = RefreshEmailAccountsAsync();
     }

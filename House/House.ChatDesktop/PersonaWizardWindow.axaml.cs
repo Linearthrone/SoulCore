@@ -668,7 +668,6 @@ public partial class PersonaWizardWindow : Window
         TraitsStep.IsVisible = step.Kind == PersonaWizardStepKind.Traits;
         CharterStep.IsVisible = step.Kind == PersonaWizardStepKind.Blurb;
         SharedSpacesStep.IsVisible = step.Kind == PersonaWizardStepKind.SharedSpaces;
-        SharedSpacesStep.IsVisible = step.Kind == PersonaWizardStepKind.SharedSpaces;
         QuarantineStep.IsVisible = step.Kind == PersonaWizardStepKind.Quarantine;
 
         if (step.Kind == PersonaWizardStepKind.Traits && step.Group is not null)
@@ -730,9 +729,7 @@ public partial class PersonaWizardWindow : Window
             PersonaWizardStepKind.Blurb =>
                 prefix + "identity blurb. Separate from the physical description.",
             PersonaWizardStepKind.SharedSpaces =>
-                prefix + "optional shared spaces. Private memory stays quarantined.",
-            PersonaWizardStepKind.SharedSpaces =>
-                prefix + "shared spaces. Attach, detach, or create. Optional.",
+                prefix + "optional shared spaces. Private memory stays quarantined; attach named spaces only.",
             PersonaWizardStepKind.Quarantine =>
                 prefix + "quarantine confirm. Memory and the local transcript stay on this id.",
             _ => throw new ArgumentOutOfRangeException(nameof(step.Kind), step.Kind, "Unhandled wizard step.")
