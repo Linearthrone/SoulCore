@@ -227,21 +227,9 @@ public partial class PersonaWizardWindow : Window
         _selectedInferenceModel = PersonaWizardLogic.NormalizeInferenceModel(pack.InferenceModel);
         _resolvedForThisPack = PersonaWizardLogic.NormalizeInferenceModel(pack.ResolvedInferenceModel);
         ApplyTraits(pack.Traits ?? new PersonaTraitScalesInfo());
-        SharedSpaceIdsBox.Text = string.Join(", ", pack.SharedSpaceIds ?? Array.Empty<string>());
         _personaIdTouched = true;
         RefreshModelHint();
         RefreshDescriptionCount();
-    }
-
-    private static string[] ParseSharedSpaceIds(string? text)
-    {
-        if (string.IsNullOrWhiteSpace(text))
-            return [];
-        return text.Split([',', ';', ' ', '\t', '\r', '\n'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-            .Select(s => s.Trim().ToLowerInvariant())
-            .Where(s => s.Length > 0)
-            .Distinct(StringComparer.Ordinal)
-            .ToArray();
     }
 
     private async Task LoadInferenceModelsAsync()
@@ -499,7 +487,6 @@ public partial class PersonaWizardWindow : Window
         {
             var traits = ReadTraits();
             var description = PhysicalDescriptionBox.Text ?? "";
-            var sharedIds = ParseSharedSpaceIds(SharedSpaceIdsBox.Text);
             PersonaWriteSnapshot result;
             if (_isCreate)
             {
@@ -520,7 +507,6 @@ public partial class PersonaWizardWindow : Window
                     traits,
                     _selectedInferenceModel,
                     description);
-                write.SharedSpaceIds = sharedIds;
                 result = await _client.CreateAsync(write).ConfigureAwait(true);
             }
             else
@@ -533,11 +519,9 @@ public partial class PersonaWizardWindow : Window
                     IdentityBlurb = IdentityBlurbBox.Text,
                     PhysicalDescription = description,
                     InferenceModel = _selectedInferenceModel,
-                    SharedSpaceIds = sharedIds,
                     Traits = traits
                 };
                 var write = PersonaWizardLogic.BuildUpdateWrite(_editTarget, edits);
-                write.SharedSpaceIds = sharedIds;
                 result = await _client.UpdateAsync(_editTarget.PersonaId, write).ConfigureAwait(true);
             }
 

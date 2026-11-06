@@ -11,7 +11,7 @@ namespace SoulCore.Config;
 /// <para><b>DesktopTargetWindowTitle fallback</b></para>
 /// <list type="number">
 /// <item>Pack <c>VmWindowTitle</c> when it names a machine of its own</item>
-/// <item>Else the Host title, or <c>SoulCoreVM</c> when that title is blank or is an old sandbox name</item>
+/// <item>Else the Host title, or <c>KsDevice</c> when that title is blank or is an old sandbox name</item>
 /// </list>
 /// <para><b>PlaywrightUserDataDir fallback</b></para>
 /// <list type="number">
@@ -26,18 +26,18 @@ public static class PersonaToolPaths
 {
     public const string BrowserDirectoryName = "browser";
 
-    /// <summary>VirtualBox machine this product drives. Not the SoulCore.AI victoria-sandbox guest.</summary>
+    /// <summary>VirtualBox machine this product drives (<c>KsDevice</c>).</summary>
     public const string SharedVmName = PersonaPack.SharedVmName;
 
     /// <summary>
     /// Pack VM title wins when it names a machine of its own.
-    /// A blank title, or one of the old per-persona sandbox names, uses the Host machine
-    /// (<see cref="SharedVmName"/> when the Host title is blank).
+    /// A blank title, or one of the old shared-sandbox aliases, uses the Host machine
+    /// (<see cref="SharedVmName"/> when the Host title is blank or also a legacy alias).
     /// </summary>
     public static string ResolveDesktopTargetWindowTitle(string? packVmWindowTitle, string? hostFallback)
     {
         var host = (hostFallback ?? string.Empty).Trim();
-        if (host.Length == 0)
+        if (host.Length == 0 || IsLegacySharedSandbox(host))
             host = SharedVmName;
 
         var fromPack = (packVmWindowTitle ?? string.Empty).Trim();
@@ -52,6 +52,8 @@ public static class PersonaToolPaths
     {
         var name = (title ?? string.Empty).Trim();
         return name.Equals("victoria-sandbox", StringComparison.OrdinalIgnoreCase)
+            || name.Equals("SoulCoreVM", StringComparison.OrdinalIgnoreCase)
+            || name.Equals("UbuntuDevice", StringComparison.OrdinalIgnoreCase)
             || name.Equals("mentor-sandbox", StringComparison.OrdinalIgnoreCase)
             || name.Equals("analyst-sandbox", StringComparison.OrdinalIgnoreCase);
     }

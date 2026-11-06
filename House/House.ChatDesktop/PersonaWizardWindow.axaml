@@ -112,17 +112,9 @@
                    Text="This blurb is not the physical description. Trait and charter edits apply on the next chat turn."/>
       </StackPanel>
 
-      <StackPanel x:Name="SharedSpacesStep" Spacing="8" IsVisible="False">
-        <TextBlock Text="Shared spaces (optional)" FontWeight="SemiBold"/>
-        <TextBlock FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource MutedBrush}"
-                   Text="Private memory stays quarantined. Attach named shared spaces (comma-separated ids). Spaces are created on Save if missing. Leave blank for none."/>
-        <TextBox x:Name="SharedSpaceIdsBox" Classes="input" MaxLength="256" Height="36"
-                 VerticalContentAlignment="Center" Padding="8,0"
-                 Watermark="e.g. house-facts, team-notes"/>
-      </StackPanel>
-
       <!-- Shared spaces (PROP-20.3): list / create / attach via Host /api/shared-spaces. -->
       <StackPanel x:Name="SharedSpacesStep" Spacing="8" IsVisible="False">
+        <TextBlock Text="Shared spaces (optional)" FontWeight="SemiBold"/>
         <TextBlock x:Name="SharedSpacesHintText" FontSize="12" TextWrapping="Wrap"
                    Foreground="{DynamicResource MutedBrush}"/>
         <ListBox x:Name="SharedSpaceList" SelectionMode="Multiple,Toggle" MaxHeight="220"

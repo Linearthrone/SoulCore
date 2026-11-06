@@ -76,29 +76,43 @@ public sealed class ActivePersonaSession : IPersonaSession
         }
     }
 
+    private int _initialized;
+
     public async Task InitializeAsync(CancellationToken cancellationToken = default)
     {
-        await _store.EnsureSeededAsync(cancellationToken).ConfigureAwait(false);
-        var activeId = await _store.GetActivePersonaIdAsync(cancellationToken).ConfigureAwait(false);
-        var pack = await _store.GetAsync(activeId, cancellationToken).ConfigureAwait(false)
-            ?? await _store.GetAsync(PersonaPack.BlankPersonaId, cancellationToken).ConfigureAwait(false)
-            ?? PersonaPack.CreateBlank();
+        // Program.cs opens stores before listen; HostedService may call again — once is enough.
+        if (Interlocked.CompareExchange(ref _initialized, 1, 0) != 0)
+            return;
 
-        lock (_gate)
+        try
         {
-            _active = pack;
-            _loaded.Clear();
-            _loaded[pack.PersonaId] = pack.Clone();
+            await _store.EnsureSeededAsync(cancellationToken).ConfigureAwait(false);
+            var activeId = await _store.GetActivePersonaIdAsync(cancellationToken).ConfigureAwait(false);
+            var pack = await _store.GetAsync(activeId, cancellationToken).ConfigureAwait(false)
+                ?? await _store.GetAsync(PersonaPack.BlankPersonaId, cancellationToken).ConfigureAwait(false)
+                ?? PersonaPack.CreateBlank();
+
+            lock (_gate)
+            {
+                _active = pack;
+                _loaded.Clear();
+                _loaded[pack.PersonaId] = pack.Clone();
+            }
+
+            // PROP-15.2: open quarantined SQLite/vector paths for the active brain.
+            await _stores.SwitchActiveAsync(pack.PersonaId, cancellationToken).ConfigureAwait(false);
+
+            _logger.LogInformation(
+                "Persona session ready: active={PersonaId} display={DisplayName} db={DbPath}",
+                pack.PersonaId,
+                pack.DisplayName,
+                _stores.ResolveMemoryDbPath(pack.PersonaId));
         }
-
-        // PROP-15.2: open quarantined SQLite/vector paths for the active brain.
-        await _stores.SwitchActiveAsync(pack.PersonaId, cancellationToken).ConfigureAwait(false);
-
-        _logger.LogInformation(
-            "Persona session ready: active={PersonaId} display={DisplayName} db={DbPath}",
-            pack.PersonaId,
-            pack.DisplayName,
-            _stores.ResolveMemoryDbPath(pack.PersonaId));
+        catch
+        {
+            Interlocked.Exchange(ref _initialized, 0);
+            throw;
+        }
     }
 
     public async Task SetActiveAsync(string personaId, CancellationToken cancellationToken = default)

@@ -103,7 +103,7 @@ Dispatch from [cursor.com/agents](https://cursor.com/agents) picking **home-pc**
   never Hermes MCP.
 - Unreal Engine avatar bridge (`:8888`) is optional; the Host logs a warning and continues
   when it is unreachable (`unreal.connected=false` in `/health`).
-- **SoulCoreVM (VirtualBox; registered VM name is still `victoria-sandbox`, see TECHDEBT in `docs/agents/PROP_SOULCORE_PERSONA.md`):** set `SOULCORE_VBOX_GUEST_USER=victoria` and
+- **KsDevice (VirtualBox; registered VM name is still `KsDevice`, see TECHDEBT in `docs/agents/PROP_SOULCORE_PERSONA.md`):** set `SOULCORE_VBOX_GUEST_USER=victoria` and
   `SOULCORE_VBOX_GUEST_PASS` (Ubuntu login password) in `SoulCore/.env`, then restart Host.
   Probe with `dotnet run --project SoulCore/SoulCore.Host -c Release -- --guestcontrol-probe`.
   Manual `VBoxManage guestcontrol … run --exe /usr/bin/whoami --` — do **not** pass the exe

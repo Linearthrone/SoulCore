@@ -33,7 +33,7 @@ public static class PersonaWizardLogic
     public const double BandMidExclusiveMax = 0.67;
 
     public const string HostGalleryRequiredMessage =
-        "Host persona packs required. Start SoulCore.Host on loopback :7720, then retry.";
+        "Host persona packs required. Start SoulCore.Host on loopback :7700, then retry.";
 
     /// <summary>Combo label for blank pack InferenceModel (inherit Host Inference:Model).</summary>
     public const string HostDefaultModelLabel = "Host default";

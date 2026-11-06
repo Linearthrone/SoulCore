@@ -136,7 +136,7 @@ public class LocalStackControlTests
     public void ForceUnlockSandboxRelativeScript_IsUnderHouseScripts()
     {
         Assert.Equal(
-            "House\\scripts\\force-unlock-victoria-sandbox.ps1",
+            "House\\scripts\\force-unlock-KsDevice.ps1",
             LocalStackControl.ForceUnlockSandboxRelativeScript);
     }
 

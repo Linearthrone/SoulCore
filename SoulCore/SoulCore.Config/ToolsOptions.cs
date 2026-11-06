@@ -44,8 +44,8 @@ public sealed class ToolsOptions
 
     /// <summary>
     /// When non-empty, desktop tools are hard-scoped to windows whose title contains
-    /// this substring (case-insensitive), e.g. <c>victoria-sandbox</c> for
-    /// <c>victoria-sandbox [Running] - Oracle VirtualBox</c>. Clicks/drags/scrolls
+    /// this substring (case-insensitive), e.g. <c>KsDevice</c> for
+    /// <c>KsDevice [Running] - Oracle VirtualBox</c>. Clicks/drags/scrolls
     /// outside that window are refused; <c>desktop_open_app</c> on the host is blocked;
     /// <c>list_desktop_windows</c> only returns matching windows. Empty = unrestricted.
     /// </summary>
@@ -78,7 +78,7 @@ public sealed class ToolsOptions
     public bool PlaywrightEmbedPane { get; set; }
 
     /// <summary>
-    /// Presence should SetParent the VirtualBox victoria-sandbox window into Her screen.
+    /// Presence should SetParent the VirtualBox KsDevice window into Her screen.
     /// Takes precedence over <see cref="PlaywrightEmbedPane"/> when both are true.
     /// Desk Windows only; leave false in CI.
     /// </summary>

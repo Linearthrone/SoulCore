@@ -311,7 +311,7 @@
                     FontWeight="SemiBold"
                     VerticalAlignment="Center"
                     Click="VmPowerButton_Click"
-                    ToolTip.Tip="Start SoulCoreVM"/>
+                    ToolTip.Tip="Start KsDevice"/>
           </Grid>
           <!-- Plain Grid (not TabControl) so Her screen always measures to full slot —
                custom TabControl templates left the embed host at 0×0 / blank. -->
@@ -576,7 +576,7 @@
                     <Panel Width="52" Height="52">
                       <Ellipse x:Name="GlowSandbox" Width="52" Height="52" IsHitTestVisible="False"/>
                       <Button x:Name="LampSandbox" Classes="lamp" Tag="sandbox" IsEnabled="False"
-                              ToolTip.Tip="SoulCoreVM VM"
+                              ToolTip.Tip="KsDevice VM"
                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Panel>
                   </Border>
@@ -673,9 +673,9 @@
                           IsChecked="True" FontWeight="SemiBold" Margin="0,0,0,6" Click="ToolsAccessToggle_Click"/>
                 <CheckBox x:Name="ToolsSoftCursorRestoreCheck" Content="Agent cursor — don't move my mouse"
                           IsChecked="True" Margin="0,0,0,6" Click="ToolsAccessToggle_Click"/>
-                <CheckBox x:Name="ToolsVmEmbedPaneCheck" Content="Embed VirtualBox (SoulCoreVM) in Her screen"
+                <CheckBox x:Name="ToolsVmEmbedPaneCheck" Content="Embed VirtualBox (KsDevice) in Her screen"
                           IsChecked="True" FontWeight="SemiBold" Margin="0,0,0,16" Click="ToolsAccessToggle_Click"
-                          ToolTip.Tip="SetParent the running VM window into Her screen. Keep SoulCoreVM visible (not minimized)."/>
+                          ToolTip.Tip="SetParent the running VM window into Her screen. Keep KsDevice visible (not minimized)."/>
                 <TextBlock Text="Trading (MT4)" FontWeight="SemiBold" Margin="0,0,0,6"/>
                 <CheckBox x:Name="ToolsAllowMt4ReadCheck" Content="Allow MT4 read (status, symbols, positions)"
                           Margin="0,0,0,6" Click="ToolsAccessToggle_Click"/>
@@ -763,7 +763,7 @@
                              Text="None loaded — use Tools &amp; Access → Email setup."
                              Margin="0,0,0,12"/>
 
-                  <TextBlock Text="Guest VM (SoulCoreVM)" FontWeight="SemiBold" Margin="0,0,0,4"/>
+                  <TextBlock Text="Guest VM (KsDevice)" FontWeight="SemiBold" Margin="0,0,0,4"/>
                   <TextBlock TextWrapping="Wrap" FontSize="11" Foreground="{DynamicResource MutedBrush}" Margin="0,0,0,6"
                              Text="Operator buttons via VBoxManage. Presence does not auto-start the VM."/>
                   <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,0,0,4">

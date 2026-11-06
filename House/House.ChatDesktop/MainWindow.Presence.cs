@@ -949,7 +949,7 @@ public partial class MainWindow
 
     private async void VmStart_Click(object? sender, RoutedEventArgs e)
     {
-        if (VmStatusText is not null) VmStatusText.Text = "Starting SoulCoreVM…";
+        if (VmStatusText is not null) VmStatusText.Text = "Starting KsDevice…";
         var result = await _stack.StartSandboxVmAsync().ConfigureAwait(true);
         if (VmStatusText is not null)
             VmStatusText.Text = result.Ok ? $"Start: {result.Detail}" : $"Start failed: {result.Detail}";
@@ -958,7 +958,7 @@ public partial class MainWindow
 
     private async void VmSave_Click(object? sender, RoutedEventArgs e)
     {
-        if (VmStatusText is not null) VmStatusText.Text = "Saving SoulCoreVM state…";
+        if (VmStatusText is not null) VmStatusText.Text = "Saving KsDevice state…";
         var result = await _stack.SaveSandboxVmAsync().ConfigureAwait(true);
         if (VmStatusText is not null)
             VmStatusText.Text = result.Ok ? $"Save state: {result.Detail}" : $"Save failed: {result.Detail}";
@@ -968,11 +968,11 @@ public partial class MainWindow
     private async void VmPowerOff_Click(object? sender, RoutedEventArgs e)
     {
         var ok = await ConfirmYesNoAsync(
-            "Power off SoulCoreVM now?\n\nUnsaved guest work may be lost. Prefer Save state when you can.",
+            "Power off KsDevice now?\n\nUnsaved guest work may be lost. Prefer Save state when you can.",
             "Power off VM").ConfigureAwait(true);
         if (!ok) return;
 
-        if (VmStatusText is not null) VmStatusText.Text = "Powering off SoulCoreVM…";
+        if (VmStatusText is not null) VmStatusText.Text = "Powering off KsDevice…";
         var result = await _stack.PowerOffSandboxVmAsync().ConfigureAwait(true);
         if (VmStatusText is not null)
             VmStatusText.Text = result.Ok ? $"Power off: {result.Detail}" : $"Power off failed: {result.Detail}";

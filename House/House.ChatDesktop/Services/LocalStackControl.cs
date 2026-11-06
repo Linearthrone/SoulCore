@@ -57,9 +57,9 @@ public sealed class LocalStackControl : IDisposable
     }
 
     /// <summary>Guest VM name for operator Start / Save / Power off.</summary>
-    public const string SandboxVmName = "victoria-sandbox";
+    public const string SandboxVmName = "KsDevice";
 
-    /// <summary>Is victoria-sandbox running? Loopback/local VBoxManage only.</summary>
+    /// <summary>Is KsDevice running? Loopback/local VBoxManage only.</summary>
     public async Task<bool> ProbeSandboxAsync(CancellationToken ct = default)
     {
         try
@@ -84,11 +84,11 @@ public sealed class LocalStackControl : IDisposable
     public Task<LocalStackActionResult> StartSandboxVmAsync(CancellationToken ct = default) =>
         RunVBoxManageAsync(new[] { "startvm", SandboxVmName, "--type", "gui" }, ct);
 
-    /// <summary>Save state (hibernate-style) for victoria-sandbox.</summary>
+    /// <summary>Save state (hibernate-style) for KsDevice.</summary>
     public Task<LocalStackActionResult> SaveSandboxVmAsync(CancellationToken ct = default) =>
         RunVBoxManageAsync(new[] { "controlvm", SandboxVmName, "savestate" }, ct);
 
-    /// <summary>Power off victoria-sandbox (caller confirms).</summary>
+    /// <summary>Power off KsDevice (caller confirms).</summary>
     public Task<LocalStackActionResult> PowerOffSandboxVmAsync(CancellationToken ct = default) =>
         RunVBoxManageAsync(new[] { "controlvm", SandboxVmName, "poweroff" }, ct);
 
@@ -129,11 +129,11 @@ public sealed class LocalStackControl : IDisposable
 
     /// <summary>Relative path for stuck-session recovery (tests + ForceUnlockSandboxVmAsync).</summary>
     public const string ForceUnlockSandboxRelativeScript =
-        "House\\scripts\\force-unlock-victoria-sandbox.ps1";
+        "House\\scripts\\force-unlock-KsDevice.ps1";
 
     /// <summary>
     /// Hard recover for stuck saved/locked sessions: run
-    /// <c>House/scripts/force-unlock-victoria-sandbox.ps1</c> (kills Host COM holders,
+    /// <c>House/scripts/force-unlock-KsDevice.ps1</c> (kills Host COM holders,
     /// emergencystop/poweroff, discardstate if needed, start GUI).
     /// </summary>
     public Task<LocalStackActionResult> ForceUnlockSandboxVmAsync(CancellationToken ct = default) =>

@@ -58,7 +58,7 @@ public static class ComputerUseGuidance
     /// <summary>VirtualBox guest-primary playbook (BrowserBackend not playwright / Her screen embed).</summary>
     public const string VmBlock =
         Marker + "\n" +
-        "You drive the Ubuntu VirtualBox guest (SoulCoreVM) shown live in Presence Her screen — " +
+        "You drive the Ubuntu VirtualBox guest (KsDevice) shown live in Presence Her screen — " +
         "NOT Playwright and NOT Kayleigh's Windows Chrome.\n" +
         "Preferred workflow:\n" +
         "1) Websites / Login / Chrome / Firefox: desktop_open_app firefox|chrome (opens guest Firefox) OR browser_navigate " +
@@ -68,7 +68,7 @@ public static class ComputerUseGuidance
         "NEVER tell Kayleigh you can only text/chat or that you have no browser — you control the embedded VM. " +
         "If a tool fails, report the real tool error (VM off, missing SOULCORE_VBOX_GUEST_PASS, etc.) and ask her to fix that; " +
         "do not invent a chat-only limitation.\n" +
-        "2) If a tool says the VM is powered off / not running: tell Kayleigh to start SoulCoreVM in VirtualBox, then retry. " +
+        "2) If a tool says the VM is powered off / not running: tell Kayleigh to start KsDevice in VirtualBox, then retry. " +
         "Do not invent a Playwright workaround unless she asks for Playwright.\n" +
         "3) Non-browser apps: desktop_open_app notepad|explorer|cmd|powershell|codium inside the guest. " +
         "codium is VSCodium, her IDE. " +
@@ -130,7 +130,7 @@ public static class ComputerUseGuidance
 
         return
             "VM PRIMARY (Her screen embed): websites and desktop control use Ubuntu guest '" + title + "' " +
-            "(VirtualBox SoulCoreVM). Start that VM if tools say it is powered off.\n" +
+            "(VirtualBox KsDevice). Start that VM if tools say it is powered off.\n" +
             "DESKTOP SCOPE: desktop_* is hard-scoped to that guest — NOT Kayleigh's Windows desktop.\n" +
             "Coordinates are guest framebuffer origin 0,0.\n" +
             "Website workflow:\n" +
@@ -264,10 +264,10 @@ public static class DesktopToolIntent
         RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Compiled);
 
     private static readonly Regex UseComputer = new(
-        @"\b(?:use|drive|control|operate)\b[\s\S]{0,24}\b(?:computer|desktop|pc|my\s+pc|the\s+mouse|vm|sandbox|virtual\s*box)\b|" +
+        @"\b(?:use|drive|control|operate)\b[\s\S]{0,24}\b(?:computer|desktop|pc|my\s+pc|the\s+mouse|vm|sandbox|virtual\s*box|ubuntu\s*device|ubuntudevice|ks\s*device|ksdevice)\b|" +
         @"\b(?:click|type|login|sign\s*in|close)\b[\s\S]{0,40}\b(?:window|app|browser|firefox|notepad|file\s+explorer|chrome|edge|page|website|link|button|login)\b|" +
         @"\b(?:on\s+my\s+(?:computer|desktop|screen)|with\s+your\s+(?:cursor|mouse|agent\s+cursor))\b|" +
-        @"\b(?:in|on|inside)\s+(?:the\s+)?(?:vm|sandbox|guest|virtual\s*box|victoria-?sandbox|soulcore-?vm)\b|" +
+        @"\b(?:in|on|inside)\s+(?:the\s+)?(?:vm|sandbox|guest|virtual\s*box|victoria-?sandbox|soulcore-?vm|ubuntu\s*device|ubuntudevice|ks\s*device|ksdevice)\b|" +
         @"\bwhat(?:'s| is| are)\s+(?:open|on\s+(?:my\s+)?(?:screen|desktop|page))\b|" +
         @"\bwhat\s+windows?\s+(?:are\s+)?open\b|" +
         @"\blist\s+(?:my\s+)?(?:windows|apps)\b",

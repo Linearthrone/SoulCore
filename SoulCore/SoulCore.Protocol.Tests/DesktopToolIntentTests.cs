@@ -156,7 +156,7 @@ public class DesktopToolIntentTests
     {
         Assert.Contains("NEVER tell Kayleigh you can only text/chat", ComputerUseGuidance.VmBlock, StringComparison.Ordinal);
         Assert.Contains("Her screen", ComputerUseGuidance.VmBlock, StringComparison.Ordinal);
-        Assert.Contains("SoulCoreVM", ComputerUseGuidance.VmBlock, StringComparison.Ordinal);
+        Assert.Contains("KsDevice", ComputerUseGuidance.VmBlock, StringComparison.Ordinal);
         Assert.Contains("When Kayleigh gives click", ComputerUseGuidance.VmBlock, StringComparison.Ordinal);
         Assert.Contains("browser_click_text-only limitation", ComputerUseGuidance.VmBlock, StringComparison.Ordinal);
         Assert.Contains("not Coursera unless she said so", ComputerUseGuidance.VmBlock, StringComparison.Ordinal);
@@ -200,6 +200,8 @@ public class DesktopToolIntentTests
     [InlineData("use the vm")]
     [InlineData("look inside the sandbox")]
     [InlineData("drive victoria-sandbox")]
+    [InlineData("drive KsDevice")]
+    [InlineData("inside the KsDevice")]
     public void TryMatch_VmPhrases_ForcesDesktopTool(string text)
     {
         Assert.True(DesktopToolIntent.TryMatch(text, out var match));

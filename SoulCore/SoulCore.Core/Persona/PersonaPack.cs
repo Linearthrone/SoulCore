@@ -10,7 +10,7 @@ public sealed class PersonaPack
     public const string MentorPersonaId = "mentor";
     public const string AnalystPersonaId = "analyst";
     /// <summary>VirtualBox machine every persona uses for guest desktop work.</summary>
-    public const string SharedVmName = "SoulCoreVM";
+    public const string SharedVmName = "KsDevice";
 
     /// <summary>Stable id used on session / APIs / future quarantine paths.</summary>
     public string PersonaId { get; set; } = BlankPersonaId;

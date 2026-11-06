@@ -166,6 +166,46 @@ public sealed class OllamaInferenceClient : IInferenceClient
     }
 
     /// <summary>
+    /// PROP-15.11: list local/cloud models via Ollama <c>GET /api/tags</c> for FED picker.
+    /// Fail-soft: returns empty list + detail when unreachable — never throws to Host.
+    /// </summary>
+    public async Task<OllamaModelListResult> ListLocalModelsAsync(CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            using var response = await _http.GetAsync("api/tags", cancellationToken).ConfigureAwait(false);
+            var body = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogWarning(
+                    "Ollama /api/tags failed: {Status} {Body}",
+                    (int)response.StatusCode,
+                    TextUtil.Truncate(body, 200));
+                return OllamaModelListResult.Unavailable(
+                    $"Ollama returned {(int)response.StatusCode}.");
+            }
+
+            var parsed = JsonSerializer.Deserialize<OllamaTagsResponse>(body, JsonOptions);
+            var names = (parsed?.Models ?? new List<OllamaTagModel>())
+                .Select(m => (m.Name ?? string.Empty).Trim())
+                .Where(n => n.Length > 0)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .OrderBy(n => n, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+            return OllamaModelListResult.Ok(names);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Ollama /api/tags unreachable");
+            return OllamaModelListResult.Unavailable(ex.Message);
+        }
+    }
+
+    /// <summary>
     /// Agent loop over <c>POST /api/chat</c>. Sends <paramref name="messages"/>
     /// + <paramref name="tools"/>, parses <c>tool_calls</c>, dispatches via
     /// <paramref name="registry"/> (falls back to the ctor-injected
@@ -1724,4 +1764,35 @@ public sealed class OllamaInferenceClient : IInferenceClient
         public string? Content { get; set; }
         public List<OllamaToolCallDto>? ToolCalls { get; set; }
     }
+
+    private sealed class OllamaTagsResponse
+    {
+        public List<OllamaTagModel>? Models { get; set; }
+    }
+
+    private sealed class OllamaTagModel
+    {
+        public string? Name { get; set; }
+    }
+}
+
+/// <summary>PROP-15.11: fail-soft result of <c>GET /api/tags</c>.</summary>
+public sealed class OllamaModelListResult
+{
+    public IReadOnlyList<string> Models { get; init; } = Array.Empty<string>();
+    public bool Available { get; init; }
+    public string? Detail { get; init; }
+
+    public static OllamaModelListResult Ok(IReadOnlyList<string> models) => new()
+    {
+        Models = models,
+        Available = true
+    };
+
+    public static OllamaModelListResult Unavailable(string? detail) => new()
+    {
+        Models = Array.Empty<string>(),
+        Available = false,
+        Detail = detail
+    };
 }

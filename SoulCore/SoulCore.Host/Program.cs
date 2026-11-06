@@ -6,11 +6,13 @@ using Microsoft.Extensions.Logging;
 using SoulCore.Adapters.Ws;
 using SoulCore.Config;
 using SoulCore.Core.Abstractions;
+using SoulCore.Core.Persona;
 using SoulCore.Host.Loop;
 using SoulCore.Memory;
 using SoulCore.Host;
 using SoulCore.Host.Hosting;
 using SoulCore.Host.Hosting.ServiceCollectionExtensions;
+using SoulCore.Host.Persona;
 
 // Local SoulCore/.env → process env (SOULCORE_* only) before any config bind.
 // .env overwrites stale Process/User-inherited tokens; never log secret values.
@@ -148,12 +150,45 @@ if (!wsPath.StartsWith('/'))
     wsPath = "/" + wsPath;
 
 var logger = app.Logger;
+
+// PROP-20: persona stores must be open before any IMemoryStore facade access
+// (startup log, health). HostedService StartAsync runs too late for this path.
+var personaSession = app.Services.GetRequiredService<ActivePersonaSession>();
+var personaHub = app.Services.GetRequiredService<IPersonaStoreHub>();
+try
+{
+    await personaSession.InitializeAsync().ConfigureAwait(false);
+}
+catch (Exception ex)
+{
+    logger.LogError(ex, "Persona session init failed before listen; forcing Blank store open");
+    try
+    {
+        await personaHub.SwitchActiveAsync(PersonaPack.BlankPersonaId).ConfigureAwait(false);
+    }
+    catch (Exception switchEx)
+    {
+        logger.LogError(switchEx, "Blank persona store open also failed");
+    }
+}
+
+string memoryPath;
+try
+{
+    memoryPath = app.Services.GetRequiredService<IMemoryStore>().DatabasePath;
+}
+catch (Exception ex)
+{
+    logger.LogWarning(ex, "Active persona memory path unavailable at startup");
+    memoryPath = "(pending)";
+}
+
 logger.LogInformation(
     "SoulCore.Host listening on http://{Address}:{Port} (health: /health, ws: {WsPath}); memory={MemoryPath}; inference={Inference}; soulLoop={SoulLoop}; unreal={Unreal}",
     bindOptions.BindAddress,
     bindOptions.Port,
     wsPath,
-    app.Services.GetRequiredService<IMemoryStore>().DatabasePath,
+    memoryPath,
     inferenceOptions.Enabled ? "ollama" : "null",
     soulLoopOptions.Enabled ? "enabled" : "disabled",
     unrealOptions.Enabled ? unrealOptions.WsUrl : "disabled");
@@ -168,12 +203,12 @@ if (SoulCore.Inference.Tools.Desktop.DesktopToolIntent.IsPlaywrightBackend(brows
 {
     logger.LogInformation(
         "BrowserBackend=playwright — websites use Host Chromium (not the embedded VM). " +
-        "Desk default is native+VmEmbedPane; set Tools:BrowserBackend=native to drive victoria-sandbox in Her screen.");
+        "Desk default is native+VmEmbedPane; set Tools:BrowserBackend=native to drive KsDevice in Her screen.");
 }
 else
 {
     logger.LogInformation(
-        "BrowserBackend={BrowserBackend} vmEmbed={VmEmbed} — websites/desktop use VirtualBox victoria-sandbox (Her screen embed). " +
+        "BrowserBackend={BrowserBackend} vmEmbed={VmEmbed} — websites/desktop use VirtualBox KsDevice (Her screen embed). " +
         "Keep the VM running and SOULCORE_VBOX_GUEST_PASS set for guestcontrol.",
         browserBackend,
         toolsAccess.VmEmbedPane);

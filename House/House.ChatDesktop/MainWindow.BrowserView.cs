@@ -31,7 +31,7 @@ public partial class MainWindow
     private bool? _sandboxRunning;
     private bool _vmPowerBusy;
     /// <summary>
-    /// Guest VM process is up but Host cannot find a SoulCoreVM HWND (orphaned after
+    /// Guest VM process is up but Host cannot find a KsDevice HWND (orphaned after
     /// Presence exit without detach). Power button becomes Recover UI.
     /// </summary>
     private bool _needsVmGuiRecover;
@@ -252,7 +252,7 @@ public partial class MainWindow
         if (!string.IsNullOrWhiteSpace(snap.Detail))
             return snap.Detail!;
         if (snap.EmbedPane)
-            return "Waiting for VirtualBox SoulCoreVM (visible, not minimized). If the VM is already running with no window, use Recover UI.";
+            return "Waiting for VirtualBox KsDevice (visible, not minimized). If the VM is already running with no window, use Recover UI.";
         return "Waiting for the companion's browser — pink cursor idle, teal on click";
     }
 
@@ -493,14 +493,14 @@ public partial class MainWindow
             if (_needsVmGuiRecover)
             {
                 VmPowerButton.Content = "Recovering…";
-                ToolTip.SetTip(VmPowerButton, "Save state then restart SoulCoreVM GUI…");
+                ToolTip.SetTip(VmPowerButton, "Save state then restart KsDevice GUI…");
                 return;
             }
 
             VmPowerButton.Content = running == true ? "Stopping…" : "Starting…";
             ToolTip.SetTip(VmPowerButton, running == true
-                ? "Saving SoulCoreVM state…"
-                : "Starting SoulCoreVM…");
+                ? "Saving KsDevice state…"
+                : "Starting KsDevice…");
             return;
         }
 
@@ -516,12 +516,12 @@ public partial class MainWindow
         if (running == true)
         {
             VmPowerButton.Content = "Stop";
-            ToolTip.SetTip(VmPowerButton, "Stop SoulCoreVM (save state - next Start resumes)");
+            ToolTip.SetTip(VmPowerButton, "Stop KsDevice (save state - next Start resumes)");
             return;
         }
 
         VmPowerButton.Content = "Start";
-        ToolTip.SetTip(VmPowerButton, "Start SoulCoreVM (force-unlocks if the session is stuck)");
+        ToolTip.SetTip(VmPowerButton, "Start KsDevice (force-unlocks if the session is stuck)");
     }
 
     private async void VmPowerButton_Click(object? sender, RoutedEventArgs e) =>
@@ -598,7 +598,7 @@ public partial class MainWindow
 
         if (VictoriaBrowserWaitingText is not null)
         {
-            VictoriaBrowserWaitingText.Text = "Re-embedding SoulCoreVM into Her screen…";
+            VictoriaBrowserWaitingText.Text = "Re-embedding KsDevice into Her screen…";
             VictoriaBrowserWaitingText.IsVisible = true;
         }
 
@@ -618,7 +618,7 @@ public partial class MainWindow
         if (VictoriaBrowserWaitingText is not null)
         {
             VictoriaBrowserWaitingText.Text =
-                "VM is up but not embedded yet — confirm Settings → Embed VirtualBox, Host /health, and that a SoulCoreVM window is visible.";
+                "VM is up but not embedded yet — confirm Settings → Embed VirtualBox, Host /health, and that a KsDevice window is visible.";
             VictoriaBrowserWaitingText.IsVisible = true;
         }
     }
