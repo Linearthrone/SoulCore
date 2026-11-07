@@ -59,9 +59,26 @@ public sealed class LocalStackControl : IDisposable
     /// <summary>Guest VM name for operator Start / Save / Power off.</summary>
     public const string SandboxVmName = "KsDevice";
 
+    /// <summary>
+    /// <c>list runningvms</c> budget. Presence polls this every few seconds; a stuck
+    /// VBoxSVC call must be killed or the clients pile up and freeze every later VBoxManage.
+    /// </summary>
+    public const int VBoxListTimeoutMs = 8000;
+
+    /// <summary>startvm / controlvm budget. Longer than list, still finite.</summary>
+    public const int VBoxControlTimeoutMs = 45000;
+
+    private int _sandboxProbeGate;
+    private bool _lastSandboxUp;
+
     /// <summary>Is KsDevice running? Loopback/local VBoxManage only.</summary>
     public async Task<bool> ProbeSandboxAsync(CancellationToken ct = default)
     {
+        // One probe at a time. A second tick must not spawn another VBoxManage
+        // while the first is still talking to VBoxSVC.
+        if (Interlocked.CompareExchange(ref _sandboxProbeGate, 1, 0) != 0)
+            return _lastSandboxUp;
+
         try
         {
             var vbox = FindVBoxManage();
@@ -70,13 +87,21 @@ public sealed class LocalStackControl : IDisposable
 
             using var proc = Process.Start(CreateVBoxPsi(vbox, new[] { "list", "runningvms" }));
             if (proc is null) return false;
-            var stdout = await proc.StandardOutput.ReadToEndAsync(ct).ConfigureAwait(false);
-            await proc.WaitForExitAsync(ct).ConfigureAwait(false);
-            return stdout.Contains(SandboxVmName, StringComparison.OrdinalIgnoreCase);
+            var run = await WaitOrKillAsync(proc, TimeSpan.FromMilliseconds(VBoxListTimeoutMs), ct)
+                .ConfigureAwait(false);
+            var up = !run.TimedOut
+                     && run.ExitCode == 0
+                     && run.Stdout.Contains(SandboxVmName, StringComparison.OrdinalIgnoreCase);
+            _lastSandboxUp = up;
+            return up;
         }
         catch
         {
             return false;
+        }
+        finally
+        {
+            Interlocked.Exchange(ref _sandboxProbeGate, 0);
         }
     }
 
@@ -172,22 +197,91 @@ public sealed class LocalStackControl : IDisposable
             if (proc is null)
                 return new LocalStackActionResult(false, "Failed to start VBoxManage");
 
-            var stdout = await proc.StandardOutput.ReadToEndAsync(ct).ConfigureAwait(false);
-            var stderr = await proc.StandardError.ReadToEndAsync(ct).ConfigureAwait(false);
-            await proc.WaitForExitAsync(ct).ConfigureAwait(false);
-            var detail = string.Join(" ", new[] { stdout, stderr }
+            var run = await WaitOrKillAsync(proc, TimeSpan.FromMilliseconds(VBoxControlTimeoutMs), ct)
+                .ConfigureAwait(false);
+            var detail = string.Join(" ", new[] { run.Stdout, run.Stderr }
                 .Select(s => s.Trim())
                 .Where(s => s.Length > 0));
             if (detail.Length > 240)
                 detail = detail[..240] + "…";
-            if (proc.ExitCode == 0)
+            if (run.TimedOut)
+                return new LocalStackActionResult(false,
+                    string.IsNullOrWhiteSpace(detail) ? "VBoxManage timed out and was stopped." : detail);
+            if (run.ExitCode == 0)
                 return new LocalStackActionResult(true, string.IsNullOrWhiteSpace(detail) ? "ok" : detail);
             return new LocalStackActionResult(false,
-                string.IsNullOrWhiteSpace(detail) ? $"VBoxManage exit {proc.ExitCode}" : detail);
+                string.IsNullOrWhiteSpace(detail) ? $"VBoxManage exit {run.ExitCode}" : detail);
         }
         catch (Exception ex)
         {
             return new LocalStackActionResult(false, ex.Message);
+        }
+    }
+
+    /// <summary>
+    /// Wait for a redirected child process. On timeout or caller cancel, kill it.
+    /// A leftover VBoxManage holds the VirtualBox service lock after Presence exits.
+    /// </summary>
+    public static async Task<VBoxProcessResult> WaitOrKillAsync(
+        Process process,
+        TimeSpan timeout,
+        CancellationToken ct)
+    {
+        using var timeoutCts = new CancellationTokenSource(timeout);
+        using var linked = CancellationTokenSource.CreateLinkedTokenSource(ct, timeoutCts.Token);
+        var stdoutTask = process.StandardOutput.ReadToEndAsync(linked.Token);
+        var stderrTask = process.StandardError.ReadToEndAsync(linked.Token);
+        try
+        {
+            await process.WaitForExitAsync(linked.Token).ConfigureAwait(false);
+            var stdout = await stdoutTask.ConfigureAwait(false);
+            var stderr = await stderrTask.ConfigureAwait(false);
+            return new VBoxProcessResult(process.ExitCode, stdout ?? "", stderr ?? "", TimedOut: false);
+        }
+        catch (OperationCanceledException) when (!ct.IsCancellationRequested)
+        {
+            KillProcessTree(process);
+            await DrainAsync(stdoutTask, stderrTask).ConfigureAwait(false);
+            return new VBoxProcessResult(
+                -1,
+                "",
+                "VBoxManage timed out after " + (int)timeout.TotalSeconds + "s and was stopped.",
+                TimedOut: true);
+        }
+        catch (OperationCanceledException)
+        {
+            KillProcessTree(process);
+            await DrainAsync(stdoutTask, stderrTask).ConfigureAwait(false);
+            throw;
+        }
+    }
+
+    private static async Task DrainAsync(Task<string> stdout, Task<string> stderr)
+    {
+        try
+        {
+            await Task.WhenAll(stdout, stderr).WaitAsync(TimeSpan.FromSeconds(1)).ConfigureAwait(false);
+        }
+        catch
+        {
+            // process was killed; leftover pipe reads are expected
+        }
+    }
+
+    private static void KillProcessTree(Process process)
+    {
+        try
+        {
+            if (!process.HasExited)
+                process.Kill(entireProcessTree: true);
+        }
+        catch (InvalidOperationException)
+        {
+            // already gone
+        }
+        catch (System.ComponentModel.Win32Exception)
+        {
+            // access denied or already exiting
         }
     }
 
@@ -779,6 +873,8 @@ $r2 = Invoke-WebRequest -Uri 'http://127.0.0.1:11434/api/tags' -UseBasicParsing 
 
     public void Dispose() => _http.Dispose();
 }
+
+public readonly record struct VBoxProcessResult(int ExitCode, string Stdout, string Stderr, bool TimedOut);
 
 public readonly record struct LocalStackActionResult(bool Ok, string Detail)
 {

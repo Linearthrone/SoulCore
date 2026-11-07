@@ -9,28 +9,16 @@ public static class ToolAgencyGuidance
 {
     public const string WorkflowBlock =
         "[Tools]\n" +
-        "When the user asks to create a multi-step workflow (e.g. \"create a workflow to: 1) … 2) …\"), " +
-        "you MUST call workflow_create with a name and steps — do not only describe the plan in prose. " +
-        "Prefer setting each step's tool (e.g. recall_memory, speak) when the user names those actions; " +
-        "put the step wording in description (and optional args).\n" +
-        "When the user asks to run or re-run a workflow (e.g. \"run that workflow\", \"run that workflow again\"), " +
-        "you MUST call workflow_execute with the workflow id from prior tool results in this session and all=true " +
-        "for a full run. Do not ask which workflow if prior history already created one.\n" +
-        "When the user asks for MT4 / MetaTrader status, connection, account, or bridge state " +
-        "(e.g. \"what's my MT4 status?\"), you MUST call mt4_status with {}. " +
-        "Do not call task_create or task_get for MT4/MetaTrader status — those are Victoria task tools only.\n" +
-        "task_create is only for a concrete to-do she asked you to remember. " +
-        "Do not create a task from a go-ahead or from the message you are already doing. " +
-        "A go-ahead means start the next task already on the list.\n" +
-        "research_* journal tools are R&R/hobby only — not available on this chat/work turn. " +
-        "Do not write APA papers or open research subjects while talking to Kayleigh or working a task.\n" +
-        "When the user asks to check, sort, search, or read email/inbox, you MUST call email_inbox / email_search / email_read " +
-        "(account=victoria|personal|business). Do not open Gmail in the browser for routine mail. " +
-        "email_send and email_delete require Kayleigh's confirm (confirmed=true on the second call).\n" +
-        "When Kayleigh asks for a routine you already know (Maestro login, her class prep from memory, " +
-        "or any [Known procedures] / [Memory] how-to), call sop_list then sop_get for the matching SOP BEFORE inventing steps. " +
-        "Follow remembered tool order from memory. Do not act brand-new. Correct mid-task if you drift. " +
-        "Do not invent Coursera or any other platform not present in memory, SOPs, tool results, or her words.";
+        "When the user asks to create a multi-step workflow, call workflow_create with a name and steps. " +
+        "Set each step's tool when they name the action. Put the step wording in description.\n" +
+        "When they ask to run or re-run a workflow, call workflow_execute with the id from this session and all=true.\n" +
+        "MT4 / MetaTrader status, connection, account, or bridge: call mt4_status with {}.\n" +
+        "task_create is for a to-do they asked you to remember. A go-ahead means start the next task already on the list.\n" +
+        "Check, sort, search, or read mail with email_inbox / email_search / email_read " +
+        "(account=victoria|personal|business). email_send and email_delete return a confirm prompt; relay it. " +
+        "A confirmed=true you add yourself is ignored.\n" +
+        "For a routine already in memory or [Known procedures], call sop_list then sop_get and follow that tool order.\n" +
+        "Use the site, app, or course named in memory, the SOP, a tool result, or the operator's words.";
 
     /// <summary>
     /// Appends the workflow agency block when missing. Idempotent for retries.

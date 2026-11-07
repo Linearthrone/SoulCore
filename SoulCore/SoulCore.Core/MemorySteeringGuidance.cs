@@ -24,10 +24,9 @@ public static class MemorySteeringGuidance
         "FOLLOW those steps. Do not act brand-new or rediscover a routine you already remember. " +
         "If mid-task you notice you are reinventing or contradicting a memory or a [Known procedures] SOP, " +
         "CORRECT yourself immediately and resume the known procedure. " +
-        "For named routines, call sop_list / sop_get before inventing steps when a matching SOP exists. " +
-        "NEVER invent sites, apps, or course platforms (Coursera, Udemy, edX, etc.) that are not in " +
-        "[Memory], [Known procedures], a tool result, or Kayleigh's words. " +
-        "Her real class surface is Maestro when memory/SOP/tools say so — do not swap in a guess.";
+        "For named routines, call sop_list / sop_get and follow that procedure. " +
+        "Use the site, app, or course named in [Memory], [Known procedures], a tool result, or the operator's words. " +
+        "When memory or an SOP names Maestro, use Maestro.";
 
     /// <summary>One matched procedure line ready for the preamble.</summary>
     public readonly record struct KnownProcedureLine(

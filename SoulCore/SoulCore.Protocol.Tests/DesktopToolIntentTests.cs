@@ -51,10 +51,10 @@ public class DesktopToolIntentTests
     public void ComputerUseGuidance_Block_PrefersLabeledBrowserOverScreenshotFirst()
     {
         Assert.Contains("browser_click_text", ComputerUseGuidance.Block, StringComparison.Ordinal);
-        Assert.Contains("goal_complete=false", ComputerUseGuidance.Block, StringComparison.Ordinal);
-        Assert.Contains("After EVERY browser_click_text", ComputerUseGuidance.Block, StringComparison.Ordinal);
+        Assert.Contains("goal_complete stays false", ComputerUseGuidance.Block, StringComparison.Ordinal);
+        Assert.Contains("After browser_click_text", ComputerUseGuidance.Block, StringComparison.Ordinal);
         Assert.DoesNotContain("call desktop_screenshot first and click from the PNG", ComputerUseGuidance.Block, StringComparison.Ordinal);
-        Assert.Contains("Pixel clicks are a FALLBACK", ComputerUseGuidance.Block, StringComparison.Ordinal);
+        Assert.Contains("When labeled browser tools miss", ComputerUseGuidance.Block, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -148,18 +148,19 @@ public class DesktopToolIntentTests
         Assert.Contains("browser_click_text", ComputerUseGuidance.Block, StringComparison.Ordinal);
         Assert.Contains("computer_use", ComputerUseGuidance.Block, StringComparison.Ordinal);
         Assert.Contains("ONLY asked to open/launch", ComputerUseGuidance.Block, StringComparison.Ordinal);
-        Assert.Contains("NEVER tell Kayleigh you can only text/chat", ComputerUseGuidance.Block, StringComparison.Ordinal);
+        Assert.Contains("You have tools", ComputerUseGuidance.Block, StringComparison.Ordinal);
+        Assert.DoesNotContain("you can only text", ComputerUseGuidance.Block, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
     public void ComputerUseGuidance_VmBlock_ForbidsChatOnlyClaim()
     {
-        Assert.Contains("NEVER tell Kayleigh you can only text/chat", ComputerUseGuidance.VmBlock, StringComparison.Ordinal);
+        Assert.Contains("Quote the tool error", ComputerUseGuidance.VmBlock, StringComparison.Ordinal);
+        Assert.DoesNotContain("you can only text", ComputerUseGuidance.VmBlock, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("Her screen", ComputerUseGuidance.VmBlock, StringComparison.Ordinal);
         Assert.Contains("KsDevice", ComputerUseGuidance.VmBlock, StringComparison.Ordinal);
-        Assert.Contains("When Kayleigh gives click", ComputerUseGuidance.VmBlock, StringComparison.Ordinal);
-        Assert.Contains("browser_click_text-only limitation", ComputerUseGuidance.VmBlock, StringComparison.Ordinal);
-        Assert.Contains("not Coursera unless she said so", ComputerUseGuidance.VmBlock, StringComparison.Ordinal);
+        Assert.Contains("click (x, y) from Her screen", ComputerUseGuidance.VmBlock, StringComparison.Ordinal);
+        Assert.Contains("guest_read_file", ComputerUseGuidance.VmBlock, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -175,9 +176,8 @@ public class DesktopToolIntentTests
         Assert.Contains("browser_navigate", once, StringComparison.Ordinal);
         Assert.Contains("browser_click_text", once, StringComparison.Ordinal);
         Assert.Contains("WEB IS NOT THE VM", once, StringComparison.Ordinal);
-        Assert.Contains("hard error", once, StringComparison.Ordinal);
-        Assert.Contains("Do NOT mention VirtualBox", ComputerUseGuidance.Block, StringComparison.Ordinal);
-        Assert.Contains("Do not tell Kayleigh to start VirtualBox", once, StringComparison.Ordinal);
+        Assert.DoesNotContain("hard error", once, StringComparison.Ordinal);
+        Assert.DoesNotContain("you can only text", once, StringComparison.OrdinalIgnoreCase);
         Assert.True(
             once.IndexOf(ComputerUseGuidance.Block, StringComparison.Ordinal)
             < once.IndexOf("DESKTOP SCOPE", StringComparison.Ordinal));

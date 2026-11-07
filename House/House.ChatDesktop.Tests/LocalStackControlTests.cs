@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using House.ChatDesktop.Services;
 using Xunit;
 
@@ -130,6 +131,28 @@ public class LocalStackControlTests
     public void RestartStackRelativeScript_IsUnderHouseScripts()
     {
         Assert.Equal("House\\scripts\\restart-stack.ps1", LocalStackControl.RestartStackRelativeScript);
+    }
+
+    [Fact]
+    public async Task WaitOrKillAsync_StopsProcessThatExceedsTimeout()
+    {
+        var psi = new ProcessStartInfo
+        {
+            FileName = "powershell.exe",
+            ArgumentList = { "-NoProfile", "-Command", "Start-Sleep -Seconds 30" },
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false,
+            CreateNoWindow = true
+        };
+        using var proc = Process.Start(psi);
+        Assert.NotNull(proc);
+
+        var result = await LocalStackControl.WaitOrKillAsync(proc, TimeSpan.FromSeconds(1), CancellationToken.None);
+
+        Assert.True(result.TimedOut);
+        Assert.True(proc.HasExited);
+        Assert.Contains("timed out", result.Stderr, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]

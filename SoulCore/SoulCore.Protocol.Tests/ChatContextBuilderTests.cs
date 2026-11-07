@@ -23,7 +23,7 @@ public class ChatContextBuilderTests
             "[SoulCore emotion]\nvalence=0.5\n");
 
         Assert.StartsWith("[Identity]", preamble, StringComparison.Ordinal);
-        Assert.Contains("Kayleigh", preamble, StringComparison.Ordinal);
+        Assert.Contains("Address them as Friend", preamble, StringComparison.Ordinal);
         Assert.Contains("[Memory]", preamble, StringComparison.Ordinal);
         Assert.Contains(MemorySteeringGuidance.Marker, preamble, StringComparison.Ordinal);
         Assert.Contains("[SoulCore emotion]", preamble, StringComparison.Ordinal);

@@ -433,9 +433,9 @@ public class ScopedDesktopControlBackendTests
         var block = ComputerUseGuidance.ScopedBlock("victoria-sandbox", "playwright");
         Assert.Contains("victoria-sandbox", block, StringComparison.Ordinal);
         Assert.Contains("DESKTOP SCOPE", block, StringComparison.Ordinal);
-        Assert.Contains("hard error", block, StringComparison.Ordinal);
+        Assert.Contains("browser_navigate", block, StringComparison.Ordinal);
         Assert.Contains("guest framebuffer", block, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("Do not tell Kayleigh to start VirtualBox", block, StringComparison.Ordinal);
+        Assert.DoesNotContain("you can only text", block, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
