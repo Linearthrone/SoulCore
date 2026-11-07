@@ -39,6 +39,7 @@ public sealed class ChatContextBuilder : IChatContextBuilder
     private readonly IPersonaSession _personaSession;
     private readonly ISharedSpaceContextBuilder _sharedSpaces;
     private readonly IVictoriaSopStore? _sops;
+    private readonly IVictoriaJournalStore? _journals;
     private readonly ILogger<ChatContextBuilder> _logger;
 
     public ChatContextBuilder(
@@ -50,7 +51,8 @@ public sealed class ChatContextBuilder : IChatContextBuilder
         ILogger<ChatContextBuilder> logger,
         IVictoriaSopStore? sops = null,
         IPersonaSession? personaSession = null,
-        ISharedSpaceContextBuilder? sharedSpaces = null)
+        ISharedSpaceContextBuilder? sharedSpaces = null,
+        IVictoriaJournalStore? journals = null)
     {
         _memory = memory ?? throw new ArgumentNullException(nameof(memory));
         _embeddings = embeddings ?? throw new ArgumentNullException(nameof(embeddings));
@@ -59,6 +61,7 @@ public sealed class ChatContextBuilder : IChatContextBuilder
         _toolsAccess = toolsAccess ?? throw new ArgumentNullException(nameof(toolsAccess));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _sops = sops;
+        _journals = journals;
         _personaSession = personaSession ?? new NullPersonaSession();
         _sharedSpaces = sharedSpaces ?? new NullSharedSpaceContextBuilder();
     }
@@ -98,6 +101,10 @@ public sealed class ChatContextBuilder : IChatContextBuilder
             sharedBlock.Length);
 
         var preamble = BuildContextPreamble(identityAnchors, recentMemories, emotionPreamble, pack, sharedBlock);
+
+        var journalBlock = await LoadJournalBlockSafeAsync(cancellationToken).ConfigureAwait(false);
+        if (journalBlock.Length > 0)
+            preamble = InsertBeforeEmotion(preamble, journalBlock);
 
         if (useToolLoop)
         {
@@ -238,6 +245,64 @@ public sealed class ChatContextBuilder : IChatContextBuilder
         catch (Exception ex)
         {
             _logger.LogDebug(ex, "SOP procedure match failed; chat continues without known-procedures block");
+            return string.Empty;
+        }
+    }
+
+    /// <summary>How many journal rows to scan when picking the newest note per book.</summary>
+    public const int ContextJournalScanLimit = 12;
+
+    /// <summary>
+    /// Newest private note from each book. Empty when there is nothing to fold in.
+    /// </summary>
+    public static string BuildJournalBlock(IReadOnlyList<VictoriaJournalEntry> entries)
+    {
+        if (entries is null || entries.Count == 0)
+            return string.Empty;
+
+        var seen = new HashSet<string>(StringComparer.Ordinal);
+        var sb = new StringBuilder();
+        sb.AppendLine("[Journal]");
+        sb.AppendLine("Private notes you wrote. Use a note when it bears on this turn. Do not recite the mood numbers.");
+        foreach (var entry in entries)
+        {
+            if (string.IsNullOrWhiteSpace(entry.BookId) || !seen.Add(entry.BookId))
+                continue;
+            var body = entry.Body.Replace('\r', ' ').Replace('\n', ' ').Trim();
+            if (body.Length == 0)
+                continue;
+            if (body.Length > 220)
+                body = body[..217] + "...";
+            sb.Append(entry.BookId);
+            sb.Append(": ");
+            sb.AppendLine(body);
+        }
+
+        if (seen.Count == 0)
+            return string.Empty;
+
+        sb.AppendLine();
+        return sb.ToString();
+    }
+
+    private async Task<string> LoadJournalBlockSafeAsync(CancellationToken cancellationToken)
+    {
+        if (_journals is null)
+            return string.Empty;
+
+        try
+        {
+            var entries = await _journals
+                .ListEntriesAsync(null, ContextJournalScanLimit, cancellationToken)
+                .ConfigureAwait(false);
+            var block = BuildJournalBlock(entries);
+            if (block.Length > 0)
+                _logger.LogDebug("Folded journal notes into chat preamble ({Length} chars)", block.Length);
+            return block;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogDebug(ex, "Journal read failed; chat continues without journal notes");
             return string.Empty;
         }
     }

@@ -65,6 +65,23 @@ public class ChatContextBuilderTests
     }
 
     [Fact]
+    public void BuildJournalBlock_KeepsNewestNotePerBook()
+    {
+        var block = ChatContextBuilder.BuildJournalBlock(
+        [
+            new VictoriaJournalEntry(3, "feeling", "I feel steady.", null, "[]", "t", "t", "self"),
+            new VictoriaJournalEntry(2, "feeling", "older feeling", null, "[]", "t", "t", "self"),
+            new VictoriaJournalEntry(1, "environment", "I want the desk lamp warmer.", null, "[]", "t", "t", "self")
+        ]);
+
+        Assert.Contains("[Journal]", block, StringComparison.Ordinal);
+        Assert.Contains("feeling: I feel steady.", block, StringComparison.Ordinal);
+        Assert.DoesNotContain("older feeling", block, StringComparison.Ordinal);
+        Assert.Contains("environment: I want the desk lamp warmer.", block, StringComparison.Ordinal);
+        Assert.Contains("Use a note when it bears on this turn.", block, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void BuildMemoryBlock_TruncatesOldestFirst()
     {
         var (block, dropped) = ChatContextBuilder.BuildMemoryBlock(

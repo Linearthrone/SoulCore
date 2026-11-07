@@ -303,6 +303,25 @@ public class VictoriaBrowserCoordMapTests
     }
 
     [Fact]
+    public void ChooseGuestViewport_WidthMatchedCrop_MapsVisiblePixelsOneToOne()
+    {
+        var children = new VictoriaBrowserCoordMap.ViewportChild[]
+        {
+            new(0, 0, 1089, 704, false),
+            new(12, 8, 1024, 665, false),
+            new(0, 0, 400, 300, false),
+        };
+
+        var view = VictoriaBrowserCoordMap.ChooseGuestViewport(children, 1024, 768);
+        Assert.Equal(new VictoriaBrowserCoordMap.EmbedViewport(12, 8, 1024, 665), view);
+
+        var top = VictoriaBrowserCoordMap.MapViewportToInject(22, 18, view!.Value, 1024, 768);
+        Assert.Equal((10, 10), (top!.Value.GuestX, top.Value.GuestY));
+
+        Assert.Null(VictoriaBrowserCoordMap.MapViewportToInject(22, 700, view.Value, 1024, 768));
+    }
+
+    [Fact]
     public void ChooseGuestViewport_WithoutThePictureChild_ReturnsNull()
     {
         var frameOnly = new VictoriaBrowserCoordMap.ViewportChild[]

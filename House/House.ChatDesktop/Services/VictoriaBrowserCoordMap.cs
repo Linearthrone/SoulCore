@@ -239,8 +239,10 @@ public static class VictoriaBrowserCoordMap
     public readonly record struct ViewportChild(int X, int Y, int Width, int Height, bool IsOverlay);
 
     /// <summary>
-    /// Pick the 1:1 picture. Its height matches the guest framebuffer (the menu and the
-    /// status bar do not). Null when nothing is within 8px, so a guess cannot be injected.
+    /// Pick the 1:1 picture. Prefer a child whose height matches the guest framebuffer
+    /// (the menu and the status bar do not). When the Her screen pane is shorter than
+    /// the guest, accept the width-matched top crop so clicks on the visible pixels
+    /// stay 1:1 instead of being dropped. Null when neither match exists.
     /// </summary>
     public static EmbedViewport? ChooseGuestViewport(
         IReadOnlyList<ViewportChild> children,
@@ -271,10 +273,26 @@ public static class VictoriaBrowserCoordMap
             bestScore = score;
         }
 
-        if (best is not { } chosen)
+        if (best is { } chosen)
+            return new EmbedViewport(chosen.X, chosen.Y, chosen.Width, chosen.Height);
+
+        ViewportChild? crop = null;
+        foreach (var child in children)
+        {
+            if (child.IsOverlay || child.Width < 200 || child.Height < 200)
+                continue;
+            if (Math.Abs(child.Width - guestWidth) > 8)
+                continue;
+            if (child.Height > guestHeight + 8)
+                continue;
+            if (crop is null || child.Height > crop.Value.Height)
+                crop = child;
+        }
+
+        if (crop is not { } cropped)
             return null;
 
-        return new EmbedViewport(chosen.X, chosen.Y, chosen.Width, chosen.Height);
+        return new EmbedViewport(cropped.X, cropped.Y, cropped.Width, cropped.Height);
     }
 
     /// <summary>
