@@ -172,10 +172,11 @@ public partial class MainWindow
             syncLocalName: true);
 
         AppendSystemNotice(
-            $"Active persona → {result.Persona.DisplayName} ({result.Persona.PersonaId}). " +
-            "Memories stay quarantined; identity applies on the next chat turn.");
+            $"Soft-switch → {result.Persona.DisplayName} ({result.Persona.PersonaId}). " +
+            "Prior transcript is another mind's archive. Settling window active; " +
+            "identity applies on the next chat turn. Memories stay quarantined.");
 
-        SetPersonaStatus(result.Note ?? $"Active: {result.Persona.DisplayName}", warn: false);
+        SetPersonaStatus(result.Note ?? $"Settling: {result.Persona.DisplayName}", warn: false);
     }
 
     private PersonaPackInfo? FindPersonaItem(string? personaId)

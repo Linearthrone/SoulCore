@@ -30,7 +30,7 @@ public class EmotionInfluencePromptTests
         Assert.Contains("label=excited", a1);
         Assert.Contains("focus=0.70", a1);
         Assert.Contains("energetic", a1);
-        Assert.Contains("Do not flatten your voice", a1);
+        Assert.Contains("Let this affect color wording lightly", a1);
         Assert.Contains("label=low", b);
         Assert.Contains("withdrawn", b);
         Assert.DoesNotContain("Respond with neutral, balanced wording", a1);

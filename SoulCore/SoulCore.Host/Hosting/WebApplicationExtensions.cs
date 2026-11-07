@@ -20,6 +20,7 @@ using SoulCore.Host.Inference;
 using SoulCore.Host.Persona;
 using SoulCore.Host.SharedSpaces;
 using SoulCore.Host.Voice;
+using SoulCore.Host.Wellbeing;
 using SoulCore.Host.Ws;
 using SoulCore.Inference.Tools.Browser;
 using SoulCore.Inference.Tools.Desktop;
@@ -76,6 +77,7 @@ internal static class WebApplicationExtensions
         app.MapVoiceApi();
         app.MapPersonaApi();
         app.MapSharedSpacesApi();
+        app.MapObservatoryApi();
         app.MapInferenceApi();
 
         app.MapGet("/health", async (
@@ -995,7 +997,7 @@ internal static class WebApplicationExtensions
             cuaDriverAvailable = cuaPath is not null,
             cuaDriverPath = cuaPath,
             scope = "session",
-            note = "Session gates until Host restart. Seeded from Tools in appsettings.json. Presence Settings → Tools & Access → Embed VirtualBox in Her screen toggles VmEmbedPane (KsDevice HWND)."
+            note = "allow* / softCursorRestore / vmEmbedPane are session-mutable until Host restart. desktopBackend, browserBackend, mt4Backend, and desktopTargetWindowTitle are startup-fixed from Tools in appsettings.json (POST cannot change them). Presence Settings → Tools & Access → Embed VirtualBox in Her screen toggles VmEmbedPane (KsDevice HWND)."
         };
     }
 

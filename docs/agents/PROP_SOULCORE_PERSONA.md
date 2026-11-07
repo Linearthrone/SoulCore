@@ -35,6 +35,15 @@ Successor execution of PROP-15 intent on **`Linearthrone/SoulCore`** (fork of `L
 | 20.3 | FED-01 | Identity tab select/create/edit wizard |
 | 20.4 | FED/BED/OPS | Full Victoria → SoulCore strip |
 | 20.5 | QA/SLOP | Quarantine, spaces, rebrand evidence |
+| 20.4b | FED/BED/OPS | C-remnant strip (notif channels, CompanionMdn, guest user docs) |
+| 21.x | BED/FED/PM | Soft switch + narrative journals + discomfort-risk journal (see PROP-21) |
+| 22.x | BED/PM | Phenomenology observatory (see PROP-22) |
+
+## Continuity wellbeing (PROP-21 / PROP-22)
+
+- Activate is **soft handoff only** via `ISoftSwitchService` (hard cutover forbidden).
+- Docs: `docs/agents/wellbeing/DISCOMFORT_RISK_JOURNAL.md`, `docs/agents/wellbeing/PHENOMENA_CATALOG.md`
+- API: `POST /api/personas/{id}/activate` (soft), `GET/POST /api/observatory/*`
 
 ## TECHDEBT — PROP-20.4 rebrand leftovers (internal identifiers, not user-facing)
 

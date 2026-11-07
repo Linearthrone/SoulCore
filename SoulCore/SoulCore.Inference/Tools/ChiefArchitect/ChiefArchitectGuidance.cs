@@ -20,7 +20,12 @@ public static class ChiefArchitectGuidance
         "5) Interior walls, room types, doors/windows per plan.\n" +
         "6) Build > Floor > Build Foundation -> choose slab - NEVER freehand-draw a slab from 0,0.\n" +
         "7) desktop_screenshot + ca_verify_checklist after each stage; ca_next_step to advance.\n" +
-        "Require AllowComputerControl for clicks/drags. Stop and ask if the UI does not match the recipe.";
+        "Require AllowComputerControl for clicks/drags. If the UI clearly does not match the recipe, " +
+        "note the mismatch once and try the next listed recovery step before pausing.";
+
+    /// <summary>Only inject CA guidance when this turn is about Chief Architect / house drafting.</summary>
+    public static bool ShouldInclude(string? userText) =>
+        ChiefArchitectToolIntent.TryMatch(userText, out _);
 
     public static string AppendToPreamble(string? contextPreamble)
     {

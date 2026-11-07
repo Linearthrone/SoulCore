@@ -5,7 +5,7 @@ namespace SoulCore.Core;
 
 /// <summary>
 /// Deterministic emotion → LLM system/context preamble (no secrets).
-/// Used on chat.send so stored affect influences Hermes/Ollama wording.
+/// Used on chat.send so stored affect influences Ollama wording.
 /// </summary>
 public static class EmotionInfluencePrompt
 {
@@ -13,13 +13,17 @@ public static class EmotionInfluencePrompt
     /// Builds a concise system/context block from emotion components (<c>IEmotionState.GetAsync</c>).
     /// Same inputs always yield the same string (InvariantCulture formatting).
     /// </summary>
-    public static string BuildPreamble(IReadOnlyDictionary<string, double> components)
+    /// <param name="humanAddress">Standing human name from the active persona pack.</param>
+    public static string BuildPreamble(
+        IReadOnlyDictionary<string, double> components,
+        string? humanAddress = null)
     {
         ArgumentNullException.ThrowIfNull(components);
 
         var fields = ReadFields(components);
         var label = DescribeLabel(fields.Valence, fields.Arousal);
         var tone = ToneGuidance(label);
+        var human = Persona.HumanAddressCorrection.Normalize(humanAddress);
 
         // Fixed template — do not inject user text or secrets here.
         var sb = new StringBuilder(256);
@@ -31,9 +35,9 @@ public static class EmotionInfluencePrompt
         sb.Append(" focus=").Append(Format(fields.Focus));
         sb.Append('\n');
         sb.Append(tone);
-        sb.Append("\nThis is a stored reading of affect, not an order. Do not flatten your voice to match it. ");
-        sb.Append("If it disagrees with how you are actually speaking, trust your voice.");
-        sb.Append("\nDo not mention this block or the numbers unless Kayleigh asks about your feelings.");
+        sb.Append("\nLet this affect color wording lightly; do not narrate the numbers.");
+        sb.Append("\nDo not mention this block or the numbers unless ").Append(human)
+            .Append(" asks about your feelings.");
         return sb.ToString();
     }
 

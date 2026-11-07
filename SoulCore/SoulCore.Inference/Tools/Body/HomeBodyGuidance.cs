@@ -6,7 +6,7 @@ namespace SoulCore.Inference.Tools.Body;
 /// Guidance + NL intent so Victoria uses her Unreal eyes and walks the Home
 /// instead of prose-only "I'm looking / I'm engaged".
 /// </summary>
-public static class HomeBodyGuidance
+public static partial class HomeBodyGuidance
 {
     public const string Marker = "[HomeBody]";
 
@@ -23,6 +23,17 @@ public static class HomeBodyGuidance
         "but you see no change, say motion may be stuck (PIE path-follow) and keep reporting truth.\n" +
         "Do not confuse chat 'engaged' status with walking or seeing.";
 
+    /// <summary>
+    /// True when the user turn is about the Unreal body / Home / eyes — not every desktop ask.
+    /// </summary>
+    public static bool ShouldInclude(string? userText)
+    {
+        if (string.IsNullOrWhiteSpace(userText))
+            return false;
+
+        return HomeBodyIntentRegex().IsMatch(userText);
+    }
+
     public static string AppendToPreamble(string? contextPreamble)
     {
         var baseText = string.IsNullOrWhiteSpace(contextPreamble)
@@ -37,6 +48,12 @@ public static class HomeBodyGuidance
 
         return baseText + "\n\n" + Block;
     }
+
+    [GeneratedRegex(
+        @"\b(home\s*body|unreal|eye[_\s-]?capture|victoria_eye|look\s+around|walk\s+(around|over|to)|" +
+        @"move_to|\bloco\b|navmesh|avatar|in[- ]world|in\s+the\s+home|her\s+body|your\s+body)\b",
+        RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
+    private static partial Regex HomeBodyIntentRegex();
 }
 
 /// <summary>

@@ -94,7 +94,7 @@ public class SmsInboundServiceTests
     [Fact]
     public void BuildSmsPreamble_HasNoToolAgencyGuidance()
     {
-        var p = SmsInboundService.BuildSmsPreamble(new[] { "prior note" });
+        var p = SmsInboundService.BuildSmsPreamble(new[] { "prior note" }, "Kayleigh");
         Assert.Contains("Do not call tools", p, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("desktop_open_app", p, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("[Memory]", p);
@@ -103,11 +103,12 @@ public class SmsInboundServiceTests
     }
 
     [Fact]
-    public void BuildSmsPreamble_LocksKayleighAddressEvenIfMemorySilent()
+    public void BuildSmsPreamble_LocksStandingAddressEvenIfMemorySilent()
     {
-        var p = SmsInboundService.BuildSmsPreamble(Array.Empty<string>());
-        Assert.Contains("Address her only as Kayleigh", p, StringComparison.Ordinal);
+        var p = SmsInboundService.BuildSmsPreamble(Array.Empty<string>(), "Kayleigh");
+        Assert.Contains("Address them only as Kayleigh", p, StringComparison.Ordinal);
         Assert.Contains("do not become a generic assistant", p, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("survives restarts", p, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]

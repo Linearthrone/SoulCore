@@ -17,7 +17,10 @@ public static class WakeContinuity
     /// <summary>
     /// Latest completed exchange. Empty when the tail has no user or assistant text.
     /// </summary>
-    public static string BuildLeftOffBlock(IReadOnlyList<ExchangeLine> recentOldestFirst)
+    /// <param name="humanAddress">Standing human name from the active persona pack (SoT).</param>
+    public static string BuildLeftOffBlock(
+        IReadOnlyList<ExchangeLine> recentOldestFirst,
+        string? humanAddress = null)
     {
         if (recentOldestFirst is null || recentOldestFirst.Count == 0)
             return string.Empty;
@@ -49,9 +52,11 @@ public static class WakeContinuity
         if (user is null && assistant is null)
             return string.Empty;
 
+        var human = Persona.HumanAddressCorrection.Normalize(humanAddress);
         var sb = new StringBuilder();
         sb.Append("[Where we left off]\n");
-        sb.Append("This is the current thread. When Kayleigh asks you to continue, resume from this conversation.\n");
+        sb.Append("This is the current thread. When ").Append(human)
+            .Append(" asks you to continue, resume from this conversation.\n");
         sb.Append(
             "If the left-off work is a routine you already know (Maestro, login), " +
             "use your remembered steps and SOPs — do not start as a beginner. " +
@@ -59,7 +64,7 @@ public static class WakeContinuity
         if (at is not null)
             sb.Append("Last exchange: ").Append(at).Append('\n');
         if (user is not null)
-            sb.Append("Kayleigh: ").Append(Truncate(user)).Append('\n');
+            sb.Append(human).Append(": ").Append(Truncate(user)).Append('\n');
         if (assistant is not null)
             sb.Append("Companion: ").Append(Truncate(assistant)).Append('\n');
         sb.Append('\n');

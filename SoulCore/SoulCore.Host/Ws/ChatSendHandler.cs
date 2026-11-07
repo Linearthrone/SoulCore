@@ -7,7 +7,10 @@ using SoulCore.Config;
 using SoulCore.Core;
 using SoulCore.Core.Abstractions;
 using SoulCore.Core.Safety;
+using SoulCore.Core.Persona;
 using SoulCore.Host.Loop;
+using SoulCore.Host.Persona;
+using SoulCore.Host.Wellbeing;
 using SoulCore.Inference.Clients;
 using SoulCore.Inference.Tooling;
 using SoulCore.Inference.Presence;
@@ -48,6 +51,12 @@ public sealed class ChatSendHandler
     private readonly WorkTurnGate? _turnGate;
     private readonly IInferenceLease? _lease;
     private readonly ILeisureSession? _leisure;
+    private readonly IPersonaSession? _personaSession;
+    private readonly IPersonaPackStore? _personaPacks;
+    private readonly IPersonaToolPathsResolver? _toolPaths;
+    private readonly IForegroundToolLoopGate? _foregroundLoops;
+    private readonly SettlingState? _settling;
+    private readonly IObservatoryStore? _observatory;
     private readonly ILogger<ChatSendHandler> _logger;
 
     public ChatSendHandler(
@@ -71,13 +80,25 @@ public sealed class ChatSendHandler
         IVictoriaTaskStore? tasks = null,
         IOperatorConsentGate? consent = null,
         IInferenceLease? lease = null,
-        ILeisureSession? leisure = null)
+        ILeisureSession? leisure = null,
+        IPersonaSession? personaSession = null,
+        IPersonaPackStore? personaPacks = null,
+        IPersonaToolPathsResolver? toolPaths = null,
+        IForegroundToolLoopGate? foregroundLoops = null,
+        SettlingState? settling = null,
+        IObservatoryStore? observatory = null)
     {
         _inference = inference ?? throw new ArgumentNullException(nameof(inference));
         _memory = memory ?? throw new ArgumentNullException(nameof(memory));
         _embeddings = embeddings ?? throw new ArgumentNullException(nameof(embeddings));
         _sessionHistory = sessionHistory ?? throw new ArgumentNullException(nameof(sessionHistory));
         _toolRegistry = toolRegistry ?? throw new ArgumentNullException(nameof(toolRegistry));
+        _personaSession = personaSession;
+        _personaPacks = personaPacks;
+        _toolPaths = toolPaths;
+        _foregroundLoops = foregroundLoops;
+        _settling = settling;
+        _observatory = observatory;
         _contextBuilder = contextBuilder ?? throw new ArgumentNullException(nameof(contextBuilder));
         _emotionSnapshot = emotionSnapshot ?? throw new ArgumentNullException(nameof(emotionSnapshot));
         _postEffects = postEffects ?? throw new ArgumentNullException(nameof(postEffects));
@@ -116,17 +137,21 @@ public sealed class ChatSendHandler
             return;
         }
 
+        await PersistHumanAddressCorrectionAsync(text, cancellationToken).ConfigureAwait(false);
+        var humanAddress = ResolveHumanAddress();
+
         if (string.IsNullOrWhiteSpace(text) && images.Count > 0)
-            text = "Kayleigh attached an image. Look at it carefully and respond.";
+            text = humanAddress + " attached an image. Look at it carefully and respond.";
         else if (images.Count > 0)
-            text = text!.Trim() + "\n\n[Vision] Kayleigh attached an image — look at the pixels and respond.";
+            text = text!.Trim() + "\n\n[Vision] " + humanAddress
+                + " attached an image — look at the pixels and respond.";
 
         var chatText = (text ?? string.Empty).Trim();
         if (chatText.Length == 0)
-            chatText = "Kayleigh attached an image. Look at it carefully and respond.";
+            chatText = humanAddress + " attached an image. Look at it carefully and respond.";
 
         // Abort R&R before waiting on the turn gate so leisure releases promptly
-        // instead of forcing Kayleigh's chat to queue behind an APA/research pass.
+        // instead of forcing human chat to queue behind an APA/research pass.
         _lease?.Abort("human-chat");
         _leisure?.Clear();
 
@@ -152,11 +177,13 @@ public sealed class ChatSendHandler
         await _emotionSnapshot.SendAsync(socket, frame.Id, cancellationToken).ConfigureAwait(false);
 
         var useToolLoop = _chatOptions.UseToolLoop;
-        var continuityTask = LoadWakeContinuityAsync(historySessionId, cancellationToken);
+        var desktopTitle = _toolPaths?.ResolveDesktopTargetWindowTitle()
+            ?? _toolsAccess.DesktopTargetWindowTitle;
+        var continuityTask = LoadWakeContinuityAsync(historySessionId, humanAddress, cancellationToken);
         var contextTask = _contextBuilder.BuildAsync(
             modelUserText,
             useToolLoop,
-            _toolsAccess.DesktopTargetWindowTitle,
+            desktopTitle,
             cancellationToken);
         await Task.WhenAll(continuityTask, contextTask).ConfigureAwait(false);
 
@@ -199,63 +226,80 @@ public sealed class ChatSendHandler
         {
             if (useToolLoop)
             {
-                var passText = modelUserText;
-                var extra = 0;
-                while (true)
+                var personaId = _personaSession?.ActivePersonaId ?? string.Empty;
+                CancellationTokenSource? loopCts = null;
+                var loopToken = cancellationToken;
+                if (_foregroundLoops is not null && !string.IsNullOrWhiteSpace(personaId))
                 {
-                    _presenceActivity?.NoteTool("Thinking");
-                    await PushActivityAsync(socket, frame.Id, "Thinking", "thinking", cancellationToken)
-                        .ConfigureAwait(false);
+                    loopCts = _foregroundLoops.Register(personaId, cancellationToken);
+                    loopToken = loopCts.Token;
+                }
 
-                    var passTools = new HashSet<string>(StringComparer.Ordinal);
-                    var passTrace = new List<ToolTraceEntry>();
-                    // Attach images only on the first pass — follow-up nudges are text.
-                    var passImages = extra == 0 ? images : null;
-                    var loopResult = await CompleteChatWithToolsAsync(
-                            passText,
-                            chatContext.Preamble,
-                            historySessionId,
-                            passTools,
-                            passTrace,
-                            cancellationToken,
-                            async (toolName, ct) =>
-                            {
-                                var phrase = WorkContinuation.PhraseForTool(toolName);
-                                _presenceActivity?.NoteTool(phrase);
-                                await PushActivityAsync(socket, frame.Id, phrase, "working", ct)
-                                    .ConfigureAwait(false);
-                            },
-                            passImages)
-                        .ConfigureAwait(false);
-                    reply = loopResult.Text;
-                    provider = loopResult.Provider;
-                    foreach (var name in passTools)
-                        dispatchedToolNames.Add(name);
-                    toolTrace.AddRange(passTrace);
-
-                    var usedWorkTools = passTools.Any(WorkContinuation.IsWorkTool);
-                    var keep = WorkContinuation.ShouldKeepGoing(chatText, reply, usedWorkTools);
-                    if (!keep || extra >= WorkContinuation.MaxExtraPasses)
+                try
+                {
+                    var passText = modelUserText;
+                    var extra = 0;
+                    while (true)
                     {
-                        pausedForBudget = keep && extra >= WorkContinuation.MaxExtraPasses;
-                        break;
-                    }
+                        _presenceActivity?.NoteTool("Thinking");
+                        await PushActivityAsync(socket, frame.Id, "Thinking", "thinking", loopToken)
+                            .ConfigureAwait(false);
 
-                    await SendReplyAsync(
-                            socket,
-                            frame.Id,
-                            WorkContinuation.VisibleText(reply, continuing: true),
-                            provider,
-                            usedStub: false,
-                            continuing: true,
-                            cancellationToken)
-                        .ConfigureAwait(false);
-                    extra++;
-                    passText = WorkContinuation.Nudge;
-                    _logger.LogInformation(
-                        "Work continuation pass {Pass} after tools={Tools}",
-                        extra,
-                        string.Join(',', passTools));
+                        var passTools = new HashSet<string>(StringComparer.Ordinal);
+                        var passTrace = new List<ToolTraceEntry>();
+                        // Attach images only on the first pass — follow-up nudges are text.
+                        var passImages = extra == 0 ? images : null;
+                        var loopResult = await CompleteChatWithToolsAsync(
+                                passText,
+                                chatContext.Preamble,
+                                historySessionId,
+                                passTools,
+                                passTrace,
+                                loopToken,
+                                async (toolName, ct) =>
+                                {
+                                    var phrase = WorkContinuation.PhraseForTool(toolName);
+                                    _presenceActivity?.NoteTool(phrase);
+                                    await PushActivityAsync(socket, frame.Id, phrase, "working", ct)
+                                        .ConfigureAwait(false);
+                                },
+                                passImages)
+                            .ConfigureAwait(false);
+                        reply = loopResult.Text;
+                        provider = loopResult.Provider;
+                        foreach (var name in passTools)
+                            dispatchedToolNames.Add(name);
+                        toolTrace.AddRange(passTrace);
+
+                        var usedWorkTools = passTools.Any(WorkContinuation.IsWorkTool);
+                        var keep = WorkContinuation.ShouldKeepGoing(chatText, reply, usedWorkTools);
+                        if (!keep || extra >= WorkContinuation.MaxExtraPasses)
+                        {
+                            pausedForBudget = keep && extra >= WorkContinuation.MaxExtraPasses;
+                            break;
+                        }
+
+                        await SendReplyAsync(
+                                socket,
+                                frame.Id,
+                                WorkContinuation.VisibleText(reply, continuing: true),
+                                provider,
+                                usedStub: false,
+                                continuing: true,
+                                loopToken)
+                            .ConfigureAwait(false);
+                        extra++;
+                        passText = WorkContinuation.Nudge;
+                        _logger.LogInformation(
+                            "Work continuation pass {Pass} after tools={Tools}",
+                            extra,
+                            string.Join(',', passTools));
+                    }
+                }
+                finally
+                {
+                    if (loopCts is not null && !string.IsNullOrWhiteSpace(personaId))
+                        _foregroundLoops?.Release(personaId, loopCts);
                 }
             }
             else
@@ -326,6 +370,8 @@ public sealed class ChatSendHandler
         if (!usedStub)
             await WriteEpisodicAfterChatAsync(modelUserText, reply, toolTrace, cancellationToken).ConfigureAwait(false);
 
+        await ObserveSoftSwitchResponseAsync(reply, cancellationToken).ConfigureAwait(false);
+
         await _postEffects.ApplyAsync(chatText, reply, dispatchedToolNames, cancellationToken).ConfigureAwait(false);
         }
         finally
@@ -333,6 +379,40 @@ public sealed class ChatSendHandler
             if (holdGate)
                 _turnGate!.Release();
         }
+    }
+
+    /// <summary>PROP-22 — attach assistant text to open soft-switch window; PROP-21.1 settle countdown.</summary>
+    private async Task ObserveSoftSwitchResponseAsync(string reply, CancellationToken cancellationToken)
+    {
+        var personaId = _personaSession?.ActivePersonaId;
+        if (string.IsNullOrWhiteSpace(personaId))
+            return;
+
+        var snap = _settling?.TryGetSnapshot();
+        if (snap is not null
+            && string.Equals(snap.PersonaId, personaId, StringComparison.OrdinalIgnoreCase)
+            && _observatory is not null
+            && !string.IsNullOrWhiteSpace(snap.StimulusId)
+            && !string.IsNullOrWhiteSpace(reply))
+        {
+            try
+            {
+                var body = reply.Length > 2000 ? reply[..2000] : reply;
+                await _observatory.AttachResponseAsync(
+                        snap.StimulusId,
+                        "chat.assistant",
+                        personaId,
+                        body,
+                        cancellationToken: cancellationToken)
+                    .ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogDebug(ex, "Observatory attach chat response failed");
+            }
+        }
+
+        _settling?.NotifyChatCompleted(personaId);
     }
 
     private async Task RememberAssignmentAsync(string userText, CancellationToken cancellationToken)
@@ -419,12 +499,40 @@ public sealed class ChatSendHandler
         }
     }
 
+    private string ResolveHumanAddress() =>
+        HumanAddressCorrection.Normalize(_personaSession?.GetActive().HumanAddress);
+
+    private async Task PersistHumanAddressCorrectionAsync(
+        string? userText,
+        CancellationToken cancellationToken)
+    {
+        if (_personaSession is null || _personaPacks is null)
+            return;
+
+        var extracted = HumanAddressCorrection.TryExtractNewAddress(userText);
+        if (extracted is null)
+            return;
+
+        var pack = _personaSession.GetActive();
+        if (!HumanAddressCorrection.IsChange(pack.HumanAddress, extracted))
+            return;
+
+        pack.HumanAddress = extracted;
+        await _personaPacks.UpsertAsync(pack, cancellationToken).ConfigureAwait(false);
+        await _personaSession.ReloadActiveAsync(cancellationToken).ConfigureAwait(false);
+        _logger.LogInformation(
+            "HumanAddress updated to {HumanAddress} for persona {PersonaId} (persisted)",
+            extracted,
+            pack.PersonaId);
+    }
+
     /// <summary>
     /// After a restart the in-memory thread is empty. Replay the durable transcript into it,
     /// and quote the latest exchange so "continue" has a place to continue from.
     /// </summary>
     private async Task<string> LoadWakeContinuityAsync(
         string historySessionId,
+        string humanAddress,
         CancellationToken cancellationToken)
     {
         if (_transcript is null || string.IsNullOrWhiteSpace(historySessionId))
@@ -469,7 +577,7 @@ public sealed class ChatSendHandler
             var lines = new List<WakeContinuity.ExchangeLine>(recent.Count);
             foreach (var row in recent)
                 lines.Add(new WakeContinuity.ExchangeLine(row.Role, row.Content, row.OccurredAt));
-            return WakeContinuity.BuildLeftOffBlock(lines);
+            return WakeContinuity.BuildLeftOffBlock(lines, humanAddress);
         }
         catch (Exception ex)
         {
@@ -494,7 +602,8 @@ public sealed class ChatSendHandler
             var episode = EpisodicMemoryPrompt.BuildFactualRecord(
                 modelUserText,
                 reply,
-                toolTrace.Select(static t => t.Name));
+                toolTrace.Select(static t => t.Name),
+                ResolveHumanAddress());
             var episodicId = await _memory
                 .WriteEpisodicAsync(episode, "chat", cancellationToken)
                 .ConfigureAwait(false);

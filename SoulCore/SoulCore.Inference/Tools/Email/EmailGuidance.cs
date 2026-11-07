@@ -17,8 +17,8 @@ public static class EmailGuidance
         "2) email_inbox(account, unread_only=true) to triage; email_search(query) to find a thread.\n" +
         "3) email_read(uid) before you summarize or reply. Quote facts from the tool result — do not invent mail.\n" +
         "4) Sort with email_file(uid, dest) (Archive / INBOX / a label). Mark read with email_mark.\n" +
-        "5) email_delete and email_send return a confirm prompt on the first call. Relay that prompt. " +
-        "A confirmed=true you add yourself is ignored.\n" +
+        "5) email_delete and email_send return a confirm prompt on the first call. Relay that prompt " +
+        "(same confirmed=true rule as [Tools]).\n" +
         "Do not put passwords in chat. " +
         "If a tool says AllowEmailRead/Send/Delete is required, enable it in Settings → Tools & Access and call the tool again.";
 

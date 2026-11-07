@@ -39,7 +39,7 @@ public sealed class ToolsOptions
     /// </summary>
     public bool SoftCursorRestore { get; set; } = true;
 
-    /// <summary>Desktop backend: <c>cua</c> (default when installed), <c>native</c>, or <c>hermes</c>.</summary>
+    /// <summary>Desktop backend: <c>cua</c> (default when installed) or <c>native</c>. Hermes is retired.</summary>
     public string DesktopBackend { get; set; } = BackendCua;
 
     /// <summary>
@@ -52,10 +52,10 @@ public sealed class ToolsOptions
     public string DesktopTargetWindowTitle { get; set; } = "";
 
     /// <summary>
-    /// Browser backend: <c>playwright</c> (default / PROP-14 — Victoria Host Chromium),
-    /// or <c>native</c> (GuestVm / BrowserCaptureBridge :17891). When
-    /// <c>playwright</c>, Host prefers it even if DesktopTargetWindowTitle is set
-    /// (VM stays for desktop_* only; web Login uses Playwright).
+    /// Browser backend: <c>native</c> (desk product — GuestVm / Her screen embed) or
+    /// <c>playwright</c> (Host Chromium; opt-in). Shipped desk <c>appsettings.json</c>
+    /// uses <c>native</c>. Code default here remains <c>playwright</c> for CI without VBox.
+    /// When <c>playwright</c>, web Login uses Playwright even if DesktopTargetWindowTitle is set.
     /// </summary>
     public string BrowserBackend { get; set; } = BackendPlaywright;
 
@@ -121,7 +121,7 @@ public sealed class ToolsOptions
 
     /// <summary>
     /// MT4 backend: <c>llmod</c> (default) → LLMOD MCP HTTP on shadow;
-    /// <c>hermes</c> → Hermes gateway fallback; <c>native</c> aliases <c>llmod</c>.
+    /// <c>native</c> aliases <c>llmod</c>. Hermes MT4 path is retired.
     /// </summary>
     public string Mt4Backend { get; set; } = BackendLlmod;
 

@@ -647,7 +647,7 @@ public class ChatWebSocketHandlerToolLoopTests
         Assert.False(inference.CompleteAsyncCalled);
 
         var episode = Assert.Single(memory.Written);
-        Assert.Contains("Kayleigh said: continue the lesson", episode, StringComparison.Ordinal);
+        Assert.Contains("Friend said: continue the lesson", episode, StringComparison.Ordinal);
         Assert.Contains("I replied: Continuing from the video.", episode, StringComparison.Ordinal);
         Assert.DoesNotContain("I felt", episode, StringComparison.Ordinal);
 

@@ -134,6 +134,7 @@ builder.WebHost.UseUrls($"http://{bindOptions.BindAddress}:{bindOptions.Port}");
 
 builder.Services
     .AddPersonaRuntime()
+    .AddWellbeingRuntime()
     .AddSharedSpaces()
     .AddMemory(memoryOptions, safetyOptions)
     .AddInference(inferenceOptions)
@@ -241,7 +242,6 @@ static int ReportSecretsPresence()
     var keys = new[]
     {
         SecretNames.A2eApiToken,
-        SecretNames.HermesApiKey,
         SecretNames.HuggingFaceToken,
         SecretNames.CompanionApiToken,
         SecretNames.OllamaApiKey,

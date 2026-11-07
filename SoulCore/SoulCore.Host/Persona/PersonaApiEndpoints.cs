@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using SoulCore.Config;
 using SoulCore.Core.Persona;
+using SoulCore.Host.Wellbeing;
 using SoulCore.Inference.Clients;
 using SoulCore.Inference.Tooling;
 
@@ -167,21 +168,33 @@ public static class PersonaApiEndpoints
 
         group.MapPost("/{personaId}/activate", async (
             string personaId,
-            IPersonaSession session,
+            ISoftSwitchService softSwitch,
             IPersonaToolPathsResolver toolPaths,
             IOptions<InferenceOptions> inferenceOpts,
             CancellationToken ct) =>
         {
             try
             {
-                await session.SetActiveAsync(personaId, ct).ConfigureAwait(false);
-                var pack = session.GetActive();
+                // PROP-21.1 — soft handoff only (hard cutover forbidden).
+                var result = await softSwitch.SoftActivateAsync(personaId, ct).ConfigureAwait(false);
+                if (!result.Ok || result.Persona is null)
+                {
+                    var code = result.StatusCode ?? 400;
+                    return Results.Json(
+                        new { error = result.Note, stimulusId = result.StimulusId },
+                        statusCode: code);
+                }
+
+                var pack = result.Persona;
                 var inf = inferenceOpts.Value ?? new InferenceOptions();
                 var resolvedModel = InferenceModelRouting.ResolveChatModel(inf, pack.InferenceModel);
                 return Results.Json(new
                 {
                     activePersonaId = pack.PersonaId,
-                    note = "Active pack switched; identity/directives/model apply on the next chat turn. PROP-15.5 tool paths + PROP-15.11 InferenceModel follow this pack.",
+                    note = result.Note,
+                    softSwitch = true,
+                    stimulusId = result.StimulusId,
+                    settlingTurnsRemaining = result.SettlingTurnsRemaining,
                     persona = ToDto(pack, isActive: true, toolPaths, inf),
                     resolvedDesktopTargetWindowTitle = toolPaths.ResolveDesktopTargetWindowTitle(),
                     resolvedPlaywrightUserDataDir = toolPaths.ResolvePlaywrightUserDataDir(),

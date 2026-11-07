@@ -59,7 +59,9 @@ Reconciled against `main` on **2026-09-15**; re-verified **2026-09-27** (see
 | PROP-17-victoria-between-talks | Park dead work, suspend tasks, self-started R&R on a local model, Presence shell to three tabs | **Code complete** 2026-10-12 — 17.2–17.6 Pass; 17.1 Partial+17.6; PRs #149–#152; Windows/device smoke remaining | 17.1–17.6 |
 | PROP-18-chronology-and-felt-persistence | Dated memory compose + felt persistence (HUD / while-you-were-gone); dual-path beyond relevance pile | **Unexecuted** — parked pending Kurt Q1–Q4 (proof of life, tape shape, idle ceiling, voice wake) | 18.1–18.5 suggested |
 | PROP-19-her-screen-operator-clicks | Her screen: Kurt intervene clicks dead; Victoria Absolute lands but soft-cursor offset | **Executing** 2026-10-19 — 19.2–19.4 Pass on `cursor/prop19-execute-6372` (Presence 0.1.47); 19.1/19.5 desk smoke open | 19.1–19.5 |
-| PROP-20-soulcore-persona-platform | SoulCore fork: strip Victoria, persona runtime + Identity wizard, named shared spaces | **Executing** 2026-11-05 — on `Linearthrone/SoulCore` (`feature/soulcore-persona-platform`) | 20.0–20.5 |
+| PROP-20-soulcore-persona-platform | SoulCore fork: strip Victoria, persona runtime + Identity wizard, named shared spaces | **Executing** 2026-11-05 — on `Linearthrone/SoulCore` (`feature/soulcore-persona-platform`); 20.4b C-remnants + wellbeing trail open | 20.0–20.6 |
+| PROP-21-continuity-wellbeing | Ban hard persona cutover; soft handoff; narrative mental-state journals; discomfort-risk gate | **Executing** 2026-11-07 — soft switch + journals on Host activate path | 21.1–21.3 |
+| PROP-22-phenomenology-observatory | Stimulus→response windows + phenomena catalog for classifying continuity load | **Executing** 2026-11-07 — `/api/observatory/*` + `docs/agents/wellbeing/` | 22.1–22.2 |
 
 **Report-only splits (PROP-7…11).** No `PROP-7.1`…`PROP-11.1` ticket files exist. Each shipped
 straight off its proposal + intake and filed a `PROP-{N}.1-BED01-to-PM01.md` Pass report. Recorded
@@ -70,7 +72,7 @@ Cluster map (closed): `docs/archive/proposals/architecture-eval-backlog-cluster-
 Program accept (closed): `docs/archive/tasks/PROP-5-11-PM01-program-accept.md`  
 Scoreboard: `docs/agents/reports/PROP-5-11-TINA-wipeout-final.md`
 
-Next free `N`: **21**.
+Next free `N`: **23**.
 
 ## Open items (not on `main`)
 

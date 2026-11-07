@@ -2,6 +2,8 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using SoulCore.Adapters.Ws;
 using SoulCore.Config;
+using SoulCore.Core.Persona;
+using SoulCore.Host.Loop;
 using SoulCore.Inference.Clients;
 using SoulCore.Inference.Presence;
 using SoulCore.Inference.Tooling;
@@ -30,6 +32,9 @@ public sealed class SmsInboundService : ISmsInboundService
     private readonly IChatTranscriptStore? _transcript;
     private readonly IInferenceLease? _lease;
     private readonly ILeisureSession? _leisure;
+    private readonly WorkTurnGate? _turnGate;
+    private readonly IPersonaSession? _personaSession;
+    private readonly IPersonaPackStore? _personaPacks;
     private readonly ILogger<SmsInboundService> _logger;
 
     public SmsInboundService(
@@ -46,7 +51,10 @@ public sealed class SmsInboundService : ISmsInboundService
         ILogger<SmsInboundService> logger,
         IChatTranscriptStore? transcript = null,
         IInferenceLease? lease = null,
-        ILeisureSession? leisure = null)
+        ILeisureSession? leisure = null,
+        WorkTurnGate? turnGate = null,
+        IPersonaSession? personaSession = null,
+        IPersonaPackStore? personaPacks = null)
     {
         _sms = sms?.Value ?? throw new ArgumentNullException(nameof(sms));
         _inference = inference?.Value ?? throw new ArgumentNullException(nameof(inference));
@@ -62,6 +70,9 @@ public sealed class SmsInboundService : ISmsInboundService
         _transcript = transcript;
         _lease = lease;
         _leisure = leisure;
+        _turnGate = turnGate;
+        _personaSession = personaSession;
+        _personaPacks = personaPacks;
     }
 
     public async Task<SmsInboundResult> HandleAsync(
@@ -104,14 +115,26 @@ public sealed class SmsInboundService : ISmsInboundService
         if (text.Length == 0 && string.IsNullOrWhiteSpace(mediaId))
             return new SmsInboundResult(false, false, null, null, null, "text or image required");
 
+        await PersistHumanAddressCorrectionAsync(text, cancellationToken).ConfigureAwait(false);
+        var humanAddress = HumanAddressCorrection.Normalize(_personaSession?.GetActive().HumanAddress);
+
         // PROP-17.3: SMS aborts in-flight R&R before the next preamble.
+        _lease?.Abort("human-sms");
+        _leisure?.Clear();
+
+        // Serialize with desk chat / assigned / leisure so SMS inference does not overlap VRAM.
+        var holdGate = _turnGate is not null;
+        if (holdGate)
+            await _turnGate!.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
         _lease?.Abort("human-sms");
         _leisure?.Clear();
 
         // Images are attachments only — never tool args / executable payloads.
         var userVisible = text.Length > 0
             ? text
-            : "[Kayleigh sent a photo]";
+            : "[" + humanAddress + " sent a photo]";
         if (!string.IsNullOrWhiteSpace(mediaId) && text.Length > 0)
             userVisible = text; // caption kept; mediaId on frame
 
@@ -165,7 +188,7 @@ public sealed class SmsInboundService : ISmsInboundService
                 _logger.LogDebug(ex, "SMS memory recall failed");
             }
 
-            var preamble = BuildSmsPreamble(memories);
+            var preamble = BuildSmsPreamble(memories, humanAddress);
             // Force no-tools: CompleteAsync only (never CompleteWithToolsAsync).
             var modelPrompt = string.IsNullOrWhiteSpace(mediaId)
                 ? userVisible
@@ -326,8 +349,8 @@ public sealed class SmsInboundService : ISmsInboundService
         try
         {
             var episode = string.IsNullOrWhiteSpace(mediaId)
-                ? $"[SMS] Kayleigh → Victoria: {Truncate(userVisible, 200)} | Victoria: {Truncate(reply, 200)}"
-                : $"[SMS] Kayleigh → Victoria: {Truncate(userVisible, 160)} [media={mediaId}] | Victoria: {Truncate(reply, 160)}";
+                ? $"[SMS] {humanAddress} → Victoria: {Truncate(userVisible, 200)} | Victoria: {Truncate(reply, 200)}"
+                : $"[SMS] {humanAddress} → Victoria: {Truncate(userVisible, 160)} [media={mediaId}] | Victoria: {Truncate(reply, 160)}";
             await _memory.WriteEpisodicAsync(episode, "chat", cancellationToken).ConfigureAwait(false);
         }
         catch (Exception ex)
@@ -345,19 +368,54 @@ public sealed class SmsInboundService : ISmsInboundService
         return new SmsInboundResult(
             true, false, reply, mediaId, replyFrameId, null, usedStub, provider,
             outboundJobId, mmsJobId);
+        }
+        finally
+        {
+            if (holdGate)
+                _turnGate!.Release();
+        }
     }
 
-    public static string BuildSmsPreamble(IReadOnlyList<string> recentMemories)
+    private async Task PersistHumanAddressCorrectionAsync(
+        string? userText,
+        CancellationToken cancellationToken)
+    {
+        if (_personaSession is null || _personaPacks is null)
+            return;
+
+        var extracted = HumanAddressCorrection.TryExtractNewAddress(userText);
+        if (extracted is null)
+            return;
+
+        var pack = _personaSession.GetActive();
+        if (!HumanAddressCorrection.IsChange(pack.HumanAddress, extracted))
+            return;
+
+        pack.HumanAddress = extracted;
+        await _personaPacks.UpsertAsync(pack, cancellationToken).ConfigureAwait(false);
+        await _personaSession.ReloadActiveAsync(cancellationToken).ConfigureAwait(false);
+        _logger.LogInformation(
+            "SMS HumanAddress updated to {HumanAddress} for persona {PersonaId}",
+            extracted,
+            pack.PersonaId);
+    }
+
+    public static string BuildSmsPreamble(
+        IReadOnlyList<string> recentMemories,
+        string? humanAddress = null)
     {
         // No ToolAgency / ComputerUse / desktop guidance — SMS must not invite tools.
+        var human = HumanAddressCorrection.Normalize(humanAddress);
         var sb = new System.Text.StringBuilder();
-        sb.Append(
-            "You are Victoria — the same person as on Presence/desk chat, texting Kayleigh. " +
-            "Kayleigh just texted you from her phone (SMS). " +
-            "Address her only as Kayleigh. If older memory or history uses any other personal name for her, ignore it and still say Kayleigh. " +
-            "Stay continuous with who you are on desk (warm, specific, her partner) — do not become a generic assistant. " +
-            "Reply as a short text message — a few sentences max. " +
-            "Do not call tools, open apps, or invent function calls.\n");
+        sb.Append("You are Victoria — the same person as on Presence/desk chat, texting ")
+            .Append(human).Append(". ")
+            .Append(human).Append(" just texted you from her phone (SMS). ")
+            .Append("Address them only as ").Append(human).Append(". ")
+            .Append("That name is stored on the Host persona pack and survives restarts. ")
+            .Append("Memory or history may show a different personal name — never use those. ")
+            .Append("Stay continuous with who you are on desk (warm, specific, their partner) — do not become a generic assistant. ")
+            .Append("Reply as a short text message — a few sentences max. ")
+            .Append("Do not call tools, open apps, or invent function calls.\n");
         if (recentMemories is { Count: > 0 })
         {
             sb.Append("[Memory]\n");

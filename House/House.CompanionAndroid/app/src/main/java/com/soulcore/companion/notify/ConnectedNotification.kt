@@ -15,11 +15,11 @@ import com.soulcore.companion.service.CompanionWsService
 /**
  * Persistent notification for [CompanionWsService] while the companion WS is up.
  *
- * Separate from FED-151 chat-reply channel (`victoria_replies`) — this channel is
+ * Separate from FED-151 chat-reply channel (`soulcore_replies`) — this channel is
  * low-importance / ongoing only (no sound). Do not post `chat.done` alerts here.
  */
 object ConnectedNotification {
-    const val CHANNEL_ID = "victoria_connected"
+    const val CHANNEL_ID = "soulcore_connected"
     const val NOTIFICATION_ID = 15001
 
     fun ensureChannel(context: Context) {

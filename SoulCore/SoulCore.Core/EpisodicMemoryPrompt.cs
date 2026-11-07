@@ -41,7 +41,7 @@ public static class EpisodicMemoryPrompt
         return UserLabel + userPart + ReplyLabel + replyPart;
     }
 
-    /// <summary>Chars kept from what Kayleigh said in a stored chat episode.</summary>
+    /// <summary>Chars kept from what the human said in a stored chat episode.</summary>
     public const int FactualUserCharLimit = 400;
 
     /// <summary>Chars kept from the companion's reply in a stored chat episode.</summary>
@@ -51,18 +51,20 @@ public static class EpisodicMemoryPrompt
     public const int FactualToolNameLimit = 12;
 
     /// <summary>
-    /// Deterministic chat episode: what Kayleigh said, what the companion replied, and which tools ran.
-    /// This is the chronology record. Feelings stay in the journal.
+    /// Deterministic chat episode: what the human said, what the companion replied, and which tools ran.
+    /// Uses the active pack's standing <paramref name="humanAddress"/> so restarts do not revive a dead name.
     /// </summary>
     public static string BuildFactualRecord(
         string? userText,
         string? assistantReply,
-        IEnumerable<string>? toolNames = null)
+        IEnumerable<string>? toolNames = null,
+        string? humanAddress = null)
     {
         var user = Truncate((userText ?? string.Empty).Trim(), FactualUserCharLimit);
         var reply = Truncate((assistantReply ?? string.Empty).Trim(), FactualReplyCharLimit);
         var tools = FormatToolNames(toolNames);
-        var record = "Kayleigh said: " + user + "\nI replied: " + reply;
+        var human = Persona.HumanAddressCorrection.Normalize(humanAddress);
+        var record = human + " said: " + user + "\nI replied: " + reply;
         if (tools.Length > 0)
             record += "\nI used: " + tools;
         return record;

@@ -231,8 +231,8 @@ internal static class ToolsServiceCollectionExtensions
     {
         // Browser tools (BED-136 / BED-182 / BED-195): browser_health / capture / click / type / key / scroll.
         // Read: Tools.AllowBrowserCapture (default true). Write: Tools.AllowComputerControl.
-        // Backend: Tools.BrowserBackend=playwright (BED-195 Victoria Chromium) preferred even when
-        // DesktopTargetWindowTitle is set (VM stays for desktop_*; web uses Playwright).
+        // Backend: Tools.BrowserBackend — desk product ships native (GuestVm); playwright is opt-in.
+        // When playwright, web uses Host Chromium even if DesktopTargetWindowTitle is set.
         // native → BrowserCaptureBridge :17891.
         services.AddHttpClient("browser-bridge", (sp, client) =>
         {

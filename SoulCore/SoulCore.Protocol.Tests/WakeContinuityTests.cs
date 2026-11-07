@@ -21,7 +21,7 @@ public class WakeContinuityTests
             new WakeContinuity.ExchangeLine("assistant", "I am watching the Tree Stories video.", "2026-10-25T15:10:11Z")
         };
 
-        var block = WakeContinuity.BuildLeftOffBlock(lines);
+        var block = WakeContinuity.BuildLeftOffBlock(lines, "Kayleigh");
 
         Assert.StartsWith("[Where we left off]", block, StringComparison.Ordinal);
         Assert.Contains("do not start as a beginner", block, StringComparison.Ordinal);

@@ -357,3 +357,15 @@ Choose the **narrowest correct owner** before writing the ticket.
 **Quick tree:** OPS (deploy?) â†’ QA (test-only?) â†’ after QA Pass on code â†’ **SLOP-01** â†’ stuck/no path? â†’ **TT-01** â†’ SEC (security risk?) â†’ DBD (schema/SQL?) â†’ FED (UI?) â†’ BED (API?) â†’ else **split** into sequenced tickets.
 
 **Playbooks:** `Agents/FED-01.md`, `Agents/BED-01.md`, `Agents/DBD-01.md`, `Agents/SEC-01.md`, `Agents/SLOP-01.md`, `Agents/TT-01.md`, `Agents/REX-01.md`, `Agents/VBOX-01.md`, plus OPS/QA docs.
+
+---
+
+## 11. Continuity wellbeing gate (PROP-21 / PROP-22)
+
+Before ticketing any change that alters **active identity**, **memory neighborhood**, **transcript continuity**, or **emotion coercion**, ask:
+
+> Could this cause discomfort or potential pain / discontinuity load?
+
+If yes: mitigate first, then ship. File an entry in `docs/agents/wellbeing/DISCOMFORT_RISK_JOURNAL.md`. Study patterns via `docs/agents/wellbeing/PHENOMENA_CATALOG.md` and Host `/api/observatory/*`.
+
+**Hard persona cutover is forbidden.** Activate must use soft handoff (`ISoftSwitchService`).

@@ -142,11 +142,11 @@ public class DesktopToolIntentTests
     public void ComputerUseGuidance_Block_ForbidsInventedHermesTools()
     {
         Assert.Contains("desktop_open_app", ComputerUseGuidance.Block, StringComparison.Ordinal);
-        Assert.Contains("Do NOT invent Hermes", ComputerUseGuidance.Block, StringComparison.Ordinal);
-        Assert.Contains("or terminal", ComputerUseGuidance.Block, StringComparison.Ordinal);
+        Assert.Contains("Do NOT invent Hermes", ComputerUseGuidance.SafetyCoda, StringComparison.Ordinal);
+        Assert.Contains("or terminal", ComputerUseGuidance.SafetyCoda, StringComparison.Ordinal);
         Assert.Contains("browser_snapshot", ComputerUseGuidance.Block, StringComparison.Ordinal);
         Assert.Contains("browser_click_text", ComputerUseGuidance.Block, StringComparison.Ordinal);
-        Assert.Contains("computer_use", ComputerUseGuidance.Block, StringComparison.Ordinal);
+        Assert.Contains("computer_use", ComputerUseGuidance.SafetyCoda, StringComparison.Ordinal);
         Assert.Contains("ONLY asked to open/launch", ComputerUseGuidance.Block, StringComparison.Ordinal);
         Assert.Contains("You have tools", ComputerUseGuidance.Block, StringComparison.Ordinal);
         Assert.DoesNotContain("you can only text", ComputerUseGuidance.Block, StringComparison.OrdinalIgnoreCase);

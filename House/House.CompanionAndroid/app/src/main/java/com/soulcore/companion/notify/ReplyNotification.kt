@@ -32,7 +32,7 @@ import java.io.File
  * Channel id: [CHANNEL_ID]. Settings keys live on [CompanionPrefs] notification prefs.
  */
 object ReplyNotification {
-    const val CHANNEL_ID = "victoria_replies"
+    const val CHANNEL_ID = "soulcore_replies"
     const val NOTIFICATION_ID_BASE = 15101
     const val EXTRA_OPEN_CHAT = "open_chat"
     const val EXTRA_FRAME_ID = "frame_id"

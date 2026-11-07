@@ -21,10 +21,24 @@ public sealed class SmsOptions
     public string AllowlistE164 { get; set; } = "";
 
     /// <summary>
-    /// Optional Victoria gateway MDN for ops notes only — not required for ingest.
-    /// Never log the raw value at Information+.
+    /// Optional companion gateway MDN for ops notes only — not required for ingest.
+    /// Env: <c>SOULCORE_Sms__CompanionMdn</c>. Never log the raw value at Information+.
     /// </summary>
-    public string VictoriaMdn { get; set; } = "";
+    public string CompanionMdn { get; set; } = "";
+
+    /// <summary>
+    /// Legacy bind name for <see cref="CompanionMdn"/> (<c>SOULCORE_Sms__VictoriaMdn</c>).
+    /// Prefer <see cref="CompanionMdn"/>.
+    /// </summary>
+    public string VictoriaMdn
+    {
+        get => CompanionMdn;
+        set
+        {
+            if (!string.IsNullOrWhiteSpace(value))
+                CompanionMdn = value;
+        }
+    }
 
     /// <summary>
     /// When true and inference is down, return a deterministic stub reply

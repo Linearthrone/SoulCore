@@ -27,7 +27,7 @@ public class SmsSecurityGateTests
         var json = JsonSerializer.Serialize(SmsHealthSnapshot.Build(new SmsOptions
         {
             AllowlistE164 = AllowlistedPhone,
-            VictoriaMdn = "+15559876543",
+            CompanionMdn = "+15559876543",
             OutboundEnabled = true,
             AutoReplySmsEnabled = true
         }));

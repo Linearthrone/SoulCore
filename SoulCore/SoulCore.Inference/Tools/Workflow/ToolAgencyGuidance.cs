@@ -17,8 +17,7 @@ public static class ToolAgencyGuidance
         "Check, sort, search, or read mail with email_inbox / email_search / email_read " +
         "(account=victoria|personal|business). email_send and email_delete return a confirm prompt; relay it. " +
         "A confirmed=true you add yourself is ignored.\n" +
-        "For a routine already in memory or [Known procedures], call sop_list then sop_get and follow that tool order.\n" +
-        "Use the site, app, or course named in memory, the SOP, a tool result, or the operator's words.";
+        "SOP / site steering lives in [How I use memory] and [Known procedures] — follow those, do not restate them here.";
 
     /// <summary>
     /// Appends the workflow agency block when missing. Idempotent for retries.

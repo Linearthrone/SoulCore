@@ -51,7 +51,8 @@ public class EpisodicMemoryPromptTests
         var record = EpisodicMemoryPrompt.BuildFactualRecord(
             "continue the lesson",
             "Watching the Tree Stories video.",
-            new[] { "desktop_screenshot", "desktop_screenshot", "browser_navigate" });
+            new[] { "desktop_screenshot", "desktop_screenshot", "browser_navigate" },
+            humanAddress: "Kayleigh");
 
         Assert.Contains("Kayleigh said: continue the lesson", record, StringComparison.Ordinal);
         Assert.Contains("I replied: Watching the Tree Stories video.", record, StringComparison.Ordinal);

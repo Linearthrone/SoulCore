@@ -12,7 +12,7 @@ public static class SmsHealthSnapshot
         ArgumentNullException.ThrowIfNull(sms);
 
         var allowlist = SmsE164.ParseAllowlist(sms.AllowlistE164);
-        var mdnNorm = SmsE164.Normalize(sms.VictoriaMdn);
+        var mdnNorm = SmsE164.Normalize(sms.CompanionMdn);
 
         return new
         {

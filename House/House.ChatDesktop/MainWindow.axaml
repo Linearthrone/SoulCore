@@ -318,7 +318,7 @@
           <Grid Grid.Row="1">
               <Border x:Name="VictoriaBrowserPanel" Background="Transparent" Padding="0">
                 <Grid RowDefinitions="*,Auto">
-                  <Border x:Name="VictoriaBrowserSurface" Classes="carbon inset" ClipToBounds="True" MinHeight="90"
+                  <Border x:Name="VictoriaBrowserSurface" Classes="carbon inset" ClipToBounds="True" MinHeight="784"
                           PointerMoved="VictoriaBrowserSurface_PointerMoved"
                           PointerExited="VictoriaBrowserSurface_PointerExited"
                           PointerPressed="VictoriaBrowserSurface_PointerPressed"
@@ -405,8 +405,7 @@
         </Border>
 
         <!-- Doing / mood stay the left half. Tasks own the right half under Her screen. -->
-        <!-- Cap the band so a 1024×768 guest can sit in Her screen without the bottom cropped. -->
-        <Border x:Name="ActivityBand" Grid.Row="1" Classes="metal glass" Padding="12,8" Margin="0,8,0,0" MaxHeight="176">
+        <Border x:Name="ActivityBand" Grid.Row="1" Classes="metal glass" Padding="12,6" Margin="0,6,0,0" MaxHeight="96">
           <Grid ColumnDefinitions="*,16,*" RowDefinitions="*,Auto">
             <StackPanel Grid.Column="0" Spacing="4" VerticalAlignment="Top">
               <TextBlock x:Name="BandDoingText" FontSize="12" TextWrapping="Wrap"

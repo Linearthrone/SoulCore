@@ -78,7 +78,7 @@ public class ChatContextBuilderTests
         Assert.Contains("feeling: I feel steady.", block, StringComparison.Ordinal);
         Assert.DoesNotContain("older feeling", block, StringComparison.Ordinal);
         Assert.Contains("environment: I want the desk lamp warmer.", block, StringComparison.Ordinal);
-        Assert.Contains("Use a note when it bears on this turn.", block, StringComparison.Ordinal);
+        Assert.Contains("Prefer these over emotion numbers", block, StringComparison.Ordinal);
     }
 
     [Fact]

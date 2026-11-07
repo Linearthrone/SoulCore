@@ -3,8 +3,10 @@ using Microsoft.Extensions.Logging;
 using SoulCore.Core;
 using SoulCore.Core.Abstractions;
 using SoulCore.Core.Persona;
+using SoulCore.Core.Wellbeing;
 using SoulCore.Host.Persona;
 using SoulCore.Host.SharedSpaces;
+using SoulCore.Host.Wellbeing;
 using SoulCore.Inference.Clients;
 using SoulCore.Inference.Presence;
 using SoulCore.Inference.Tooling;
@@ -40,6 +42,7 @@ public sealed class ChatContextBuilder : IChatContextBuilder
     private readonly ISharedSpaceContextBuilder _sharedSpaces;
     private readonly IVictoriaSopStore? _sops;
     private readonly IVictoriaJournalStore? _journals;
+    private readonly SettlingState? _settling;
     private readonly ILogger<ChatContextBuilder> _logger;
 
     public ChatContextBuilder(
@@ -52,7 +55,8 @@ public sealed class ChatContextBuilder : IChatContextBuilder
         IVictoriaSopStore? sops = null,
         IPersonaSession? personaSession = null,
         ISharedSpaceContextBuilder? sharedSpaces = null,
-        IVictoriaJournalStore? journals = null)
+        IVictoriaJournalStore? journals = null,
+        SettlingState? settling = null)
     {
         _memory = memory ?? throw new ArgumentNullException(nameof(memory));
         _embeddings = embeddings ?? throw new ArgumentNullException(nameof(embeddings));
@@ -62,6 +66,7 @@ public sealed class ChatContextBuilder : IChatContextBuilder
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _sops = sops;
         _journals = journals;
+        _settling = settling;
         _personaSession = personaSession ?? new NullPersonaSession();
         _sharedSpaces = sharedSpaces ?? new NullSharedSpaceContextBuilder();
     }
@@ -79,9 +84,10 @@ public sealed class ChatContextBuilder : IChatContextBuilder
 
         // PROP-8.4 / PROP-5 gate: independent reads run in parallel; each piece
         // is assembled into one immutable ChatContext afterward.
+        var humanAddress = HumanAddressCorrection.Normalize(pack.HumanAddress);
         var memoriesTask = RecallChatMemoriesSafeAsync(userText, cancellationToken);
         var identityTask = LoadIdentityAnchorsSafeAsync(cancellationToken);
-        var emotionTask = LoadEmotionPreambleSafeAsync(cancellationToken);
+        var emotionTask = LoadEmotionPreambleSafeAsync(humanAddress, cancellationToken);
         var sharedTask = _sharedSpaces.BuildAttachedContextAsync(pack, ct: cancellationToken);
 
         await Task.WhenAll(memoriesTask, identityTask, emotionTask, sharedTask).ConfigureAwait(false);
@@ -106,8 +112,28 @@ public sealed class ChatContextBuilder : IChatContextBuilder
         if (journalBlock.Length > 0)
             preamble = InsertBeforeEmotion(preamble, journalBlock);
 
+        // PROP-21.2 — narrative mental-state guidance (prefer prose over VAD alone).
+        preamble = InsertBeforeEmotion(
+            preamble,
+            "[SoulCore mental-state]\n" + NarrativeMentalState.JournalGuidance + "\n\n");
+
+        // PROP-21.1 — soft-switch settling bridge.
+        var settling = _settling?.TryGetSnapshot();
+        if (settling is not null
+            && string.Equals(settling.PersonaId, pack.PersonaId, StringComparison.OrdinalIgnoreCase))
+        {
+            preamble = InsertBeforeEmotion(
+                preamble,
+                NarrativeMentalState.BuildSettlingPreamble(
+                    settling.FromDisplayName,
+                    settling.FromPersonaId,
+                    settling.RemainingTurns) + "\n\n");
+        }
+
         if (useToolLoop)
         {
+            // During settling, still allow tools but soft-switch preamble asks for lighter pressure.
+            // Hard tool ban is deferred; settle window is primarily context + activate-block.
             var knownProcedures = await LoadMatchingProceduresSafeAsync(
                     userText,
                     recentMemories,
@@ -121,8 +147,10 @@ public sealed class ChatContextBuilder : IChatContextBuilder
                 preamble,
                 desktopTargetWindowTitle,
                 _toolsAccess.BrowserBackend);
-            preamble = HomeBodyGuidance.AppendToPreamble(preamble);
-            preamble = ChiefArchitectGuidance.AppendToPreamble(preamble);
+            if (HomeBodyGuidance.ShouldInclude(userText))
+                preamble = HomeBodyGuidance.AppendToPreamble(preamble);
+            if (ChiefArchitectGuidance.ShouldInclude(userText))
+                preamble = ChiefArchitectGuidance.AppendToPreamble(preamble);
             preamble = EmailGuidance.AppendToPreamble(preamble);
             preamble = PersonaPromptBlocks.AppendToolGuidance(preamble, pack);
         }
@@ -183,12 +211,14 @@ public sealed class ChatContextBuilder : IChatContextBuilder
         }
     }
 
-    private async Task<string> LoadEmotionPreambleSafeAsync(CancellationToken cancellationToken)
+    private async Task<string> LoadEmotionPreambleSafeAsync(
+        string humanAddress,
+        CancellationToken cancellationToken)
     {
         try
         {
             var emotion = await _emotion.GetAsync(cancellationToken).ConfigureAwait(false);
-            var preamble = EmotionInfluencePrompt.BuildPreamble(emotion);
+            var preamble = EmotionInfluencePrompt.BuildPreamble(emotion, humanAddress);
             _logger.LogDebug("Emotion influence preamble ready ({Length} chars)", preamble.Length);
             return preamble;
         }
@@ -196,7 +226,8 @@ public sealed class ChatContextBuilder : IChatContextBuilder
         {
             _logger.LogDebug(ex, "Emotion read failed; chat continues without influence preamble");
             return EmotionInfluencePrompt.BuildPreamble(
-                new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase));
+                new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase),
+                humanAddress);
         }
     }
 
@@ -263,16 +294,24 @@ public sealed class ChatContextBuilder : IChatContextBuilder
         var seen = new HashSet<string>(StringComparer.Ordinal);
         var sb = new StringBuilder();
         sb.AppendLine("[Journal]");
-        sb.AppendLine("Private notes you wrote. Use a note when it bears on this turn. Do not recite the mood numbers.");
-        foreach (var entry in entries)
+        sb.AppendLine(
+            "Private narrative notes you wrote (event + how it landed + what remains unsettled). " +
+            "Prefer these over emotion numbers. Do not recite VAD scores.");
+        // Prefer feeling / mental-state notes first so soft-switch narratives win the scan budget.
+        var ordered = entries
+            .OrderBy(e => string.Equals(e.BookId, "feeling", StringComparison.OrdinalIgnoreCase) ? 0 : 1)
+            .ThenByDescending(e => e.Id)
+            .ToList();
+        foreach (var entry in ordered)
         {
             if (string.IsNullOrWhiteSpace(entry.BookId) || !seen.Add(entry.BookId))
                 continue;
             var body = entry.Body.Replace('\r', ' ').Replace('\n', ' ').Trim();
             if (body.Length == 0)
                 continue;
-            if (body.Length > 220)
-                body = body[..217] + "...";
+            var max = string.Equals(entry.BookId, "feeling", StringComparison.OrdinalIgnoreCase) ? 480 : 220;
+            if (body.Length > max)
+                body = body[..(max - 3)] + "...";
             sb.Append(entry.BookId);
             sb.Append(": ");
             sb.AppendLine(body);

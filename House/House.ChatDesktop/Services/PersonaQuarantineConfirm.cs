@@ -8,9 +8,10 @@ public static class PersonaQuarantineConfirm
         var name = string.IsNullOrWhiteSpace(displayName) ? personaId : displayName.Trim();
         var id = string.IsNullOrWhiteSpace(personaId) ? "?" : personaId.Trim();
         return
-            $"Switch active persona to {name} ({id})?\n\n" +
-            "Memories, charter, and journals stay quarantined per persona. " +
-            "They do not follow this switch.\n\n" +
+            $"Soft-switch to {name} ({id})?\n\n" +
+            "This is a soft handoff (never a hard cut): the outgoing mind journals a close, " +
+            "their recent turns stay archive of another mind, and the incoming mind settles for a few turns.\n\n" +
+            "Memories, charter, and journals stay quarantined per persona — they do not follow this switch.\n\n" +
             "Continue?";
     }
 

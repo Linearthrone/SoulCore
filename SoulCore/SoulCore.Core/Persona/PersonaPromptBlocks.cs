@@ -31,13 +31,17 @@ public static class PersonaPromptBlocks
 
     /// <summary>
     /// Standing address rule for the human, using the pack's <see cref="PersonaPack.HumanAddress"/>.
+    /// Pack address is Host SoT and survives restarts; obsolete names in memory must not win.
     /// </summary>
     public static string BuildHumanAddressRule(string humanAddress)
     {
-        var name = string.IsNullOrWhiteSpace(humanAddress) ? "Friend" : humanAddress.Trim();
+        var name = HumanAddressCorrection.Normalize(humanAddress);
         return
-            $"The human you are with is {name}. Address them as {name} only; " +
-            "if memory or history uses any other personal name for them, ignore it.";
+            $"The human you are with is {name}. Address them as {name} only. " +
+            "That name is stored on the Host persona pack and survives restarts. " +
+            "Memory, transcript, or old habits may show a different personal name — never use those. " +
+            "If they correct their name (for example \"call me …\"), confirm once and use the new name; " +
+            "the Host persists the correction so you do not revert after a restart.";
     }
 
     /// <summary>
@@ -67,22 +71,16 @@ public static class PersonaPromptBlocks
     {
         ArgumentNullException.ThrowIfNull(pack);
         var display = string.IsNullOrWhiteSpace(pack.DisplayName) ? pack.PersonaId : pack.DisplayName.Trim();
-        var human = string.IsNullOrWhiteSpace(pack.HumanAddress) ? "Friend" : pack.HumanAddress.Trim();
-        var policy = pack.ToolPolicy ?? new PersonaToolPolicy();
+        var human = HumanAddressCorrection.Normalize(pack.HumanAddress);
 
         var sb = new StringBuilder(256);
         sb.Append(ToolMarker).Append('\n');
         sb.Append("Active persona: ").Append(display)
             .Append(" (personaId=").Append(pack.PersonaId.Trim()).Append("). ");
-        sb.Append("When confirming tools with the human, address them as ").Append(human).Append(". ");
-        sb.Append("Pack tool policy: desktop=")
-            .Append(policy.AllowDesktop ? "on" : "off")
-            .Append(", browser=")
-            .Append(policy.AllowBrowser ? "on" : "off")
-            .Append(", email=")
-            .Append(policy.AllowEmail ? "on" : "off")
-            .Append('.');
+        sb.Append("When confirming tools with the human, address them as ").Append(human).Append('.');
         // PROP-15.5: surface pack VM title / Playwright profile when set (host Tools is fallback).
+        // Do not echo ToolPolicy on/off flags here — Host gates/tools are the real authority;
+        // a prompt "desktop=off" while tools remain registered only fights the model.
         if (!string.IsNullOrWhiteSpace(pack.VmWindowTitle))
             sb.Append(" VM window title: ").Append(pack.VmWindowTitle.Trim()).Append('.');
         if (!string.IsNullOrWhiteSpace(pack.PlaywrightProfileDir))
